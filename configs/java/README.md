@@ -72,6 +72,8 @@ that is the minimum discipline that keeps a rule meaningful. See `../../playbook
 
 * `demo/OrderTotalsBad.java` - deliberately wrong: 6 parameters, 5 magic numbers, an empty catch, a TODO.
   Measured: `java -jar checkstyle.jar -c checkstyle.xml demo/OrderTotalsBad.java` → **8 audit messages**
+  (get the JAR: `curl -sLO https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.21.4/checkstyle-10.21.4-all.jar`
+  - it is not vendored here)
   = 7 WARN (1 `ParameterNumber` line 9 + 5 `MagicNumber` lines 23, 24, 26, 30, 34 + 1 `EmptyCatchBlock`
 line 35) and 1 INFO (`TodoComment` line 3). Counting only WARN gives 7; the exit code is what CI reads.
   `LineLength` and `MethodLength` stay **silent**: the demo keeps its functions under the limit - it breaks

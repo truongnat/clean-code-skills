@@ -3,8 +3,17 @@
 Same three rules as `arch-scan`, enforced where Java belongs: in the build, against compiled
 classes. ArchUnit 1.3.0 + OpenJDK 11, no Maven or Gradle needed for the demo.
 
+Get the two JARs first (not vendored in this repo - they are third-party binaries):
+
+    mkdir -p javalib && cd javalib
+    curl -sLO https://repo1.maven.org/maven2/com/tngtech/archunit/archunit/1.3.0/archunit-1.3.0.jar
+    curl -sLO https://repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.13/slf4j-api-2.0.13.jar
+    cd -
+
+Then:
+
     cd configs/architecture/demo/java
-    CP=/path/to/archunit-1.3.0.jar:/path/to/slf4j-api-2.0.13.jar
+    CP=../../../../javalib/archunit-1.3.0.jar:../../../../javalib/slf4j-api-2.0.13.jar
     javac -nowarn -cp $CP -d classes $(find src src_check -name '*.java')
     java -cp classes:$CP ArchitectureCheck          # exit 1 on violation
 

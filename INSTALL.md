@@ -1,5 +1,14 @@
 # INSTALL — 4 steps, 10 minutes
 
+```bash
+git clone https://github.com/truongnat/clean-code-skills.git
+cd /path/to/your-project
+PACK=/path/to/clean-code-skills      # every command below uses $PACK; set it once
+```
+
+Commands in §1–§3 run **from your project root**. The ones under *Acceptance* run **from inside the
+clone**, because they test the pack itself.
+
 ## 1. Install into your agent
 
 Two artefacts do all the work, and every provider takes at least one of them:
@@ -24,12 +33,12 @@ trust it over this table.
 
 ```bash
 # Every provider: the portable instructions page
-cp clean-code-skills/AGENTS.md .                     # then trim it to your repo
+cp $PACK/AGENTS.md .                     # then trim it to your repo
 
 # (a) Claude Code — per repo (recommended: the standard is reviewed like code)
-mkdir -p .claude/skills && cp -r clean-code-skills/skills/clean-* .claude/skills/
+mkdir -p .claude/skills && cp -r $PACK/skills/clean-* .claude/skills/
 # ...or per user, available in every repo:
-mkdir -p ~/.claude/skills && cp -r clean-code-skills/skills/clean-* ~/.claude/skills/
+mkdir -p ~/.claude/skills && cp -r $PACK/skills/clean-* ~/.claude/skills/
 # Claude Code reads CLAUDE.md, not AGENTS.md:
 printf 'See @AGENTS.md for the coding standard.\n' >> CLAUDE.md
 
@@ -37,15 +46,15 @@ printf 'See @AGENTS.md for the coding standard.\n' >> CLAUDE.md
 grok inspect | grep -i -e skill -e agents      # confirm both were discovered
 
 # (c) Antigravity — same SKILL.md folders, different directory
-mkdir -p .agents/skills && cp -r clean-code-skills/skills/clean-* .agents/skills/
+mkdir -p .agents/skills && cp -r $PACK/skills/clean-* .agents/skills/
 
 # (d) Codex
-mkdir -p ~/.codex/skills && cp -r clean-code-skills/skills/clean-* ~/.codex/skills/
+mkdir -p ~/.codex/skills && cp -r $PACK/skills/clean-* ~/.codex/skills/
 
 # (e) Cursor — a rules file, and its frontmatter is NOT the SKILL.md frontmatter
 mkdir -p .cursor/rules
 { printf -- '---\ndescription: Clean Code standard - naming, functions, errors, SOLID, layers\nglobs:\n  - "**/*.{ts,tsx,js,py,java,go}"\nalwaysApply: true\n---\n'
-  awk 'n>=2; /^---$/ && n<2 {n++}' clean-code-skills/skills/clean-code/SKILL.md  # drop its frontmatter
+  awk 'n>=2; /^---$/ && n<2 {n++}' $PACK/skills/clean-code/SKILL.md  # drop its frontmatter
 } > .cursor/rules/clean-code.mdc
 ```
 
@@ -71,7 +80,7 @@ quality gate*.
 
 ```bash
 mkdir -p tools
-cp clean-code-skills/tools/cc-scan.py clean-code-skills/tools/arch-scan.py tools/
+cp $PACK/tools/cc-scan.py $PACK/tools/arch-scan.py tools/
 python3 tools/cc-scan.py . --fail-on none | head -2     # prints your current score
 python3 tools/arch-scan.py . --fail-on none | head -8   # layer census + dependency matrix
 ```
@@ -80,28 +89,28 @@ Want the skills to always find the scripts, even in a repo without `tools/`:
 
 ```bash
 mkdir -p .claude/skills/clean-code/tools
-cp clean-code-skills/tools/{cc-scan.py,arch-scan.py} .claude/skills/clean-code/tools/
+cp $PACK/tools/{cc-scan.py,arch-scan.py} .claude/skills/clean-code/tools/
 ```
 
 `arch-scan` needs one thing `cc-scan` does not: a **declared layer map**. Without a config it still
 works (it reports `UNCLASSIFIED_FILES` rather than pretending), but you should copy the template:
 
 ```bash
-cp clean-code-skills/configs/architecture/arch-scan.config.json .   # edit layers to your folder names
+cp $PACK/configs/architecture/arch-scan.config.json .   # edit layers to your folder names
 ```
 
 ## 3. Copy the config for your stack
 
 | Stack | Command |
 |---|---|
-| JS/TS | `cp clean-code-skills/configs/js/.prettierrc.json clean-code-skills/configs/js/eslint.config.js .` then `npm i -D prettier eslint @eslint/js typescript-eslint husky lint-staged` |
-| Python | `cp clean-code-skills/configs/python/pyproject.toml .` · `pipx install pre-commit && pre-commit install` · `cp clean-code-skills/configs/ci/.pre-commit-config.yaml . && cp -r clean-code-skills/configs/ci/hooks .` · `bash clean-code-skills/configs/python/lint.sh` |
-| Python + contracts | `cp clean-code-skills/configs/architecture/.importlinter .` · `pipx install import-linter && lint-imports` |
-| Java | `cp clean-code-skills/configs/java/checkstyle.xml build-tools/` + enable the plugin (see `configs/java/README.md`); for layers: ArchUnit — `configs/architecture/demo/java` |
-| Go | `cp clean-code-skills/configs/go/.golangci.yml .` (contains `depguard` rules for the layer ban) |
-| Node/TS boundaries | `cp clean-code-skills/configs/architecture/.dependency-cruiser.cjs .` |
-| EditorConfig | `cp clean-code-skills/configs/ci/.editorconfig .` |
-| CI | `mkdir -p .github/workflows && cp clean-code-skills/configs/ci/github-actions-clean-code.yml .github/workflows/clean-code.yml` (GitLab: `configs/ci/gitlab-ci-clean-code.yml`) |
+| JS/TS | `cp $PACK/configs/js/.prettierrc.json $PACK/configs/js/eslint.config.js .` then `npm i -D prettier eslint @eslint/js typescript-eslint husky lint-staged` |
+| Python | `cp $PACK/configs/python/pyproject.toml .` · `pipx install pre-commit && pre-commit install` · `cp $PACK/configs/ci/.pre-commit-config.yaml . && cp -r $PACK/configs/ci/hooks .` · `bash $PACK/configs/python/lint.sh` |
+| Python + contracts | `cp $PACK/configs/architecture/.importlinter .` · `pipx install import-linter && lint-imports` |
+| Java | `cp $PACK/configs/java/checkstyle.xml build-tools/` + enable the plugin (see `configs/java/README.md`); for layers: ArchUnit — `configs/architecture/demo/java` |
+| Go | `cp $PACK/configs/go/.golangci.yml .` (contains `depguard` rules for the layer ban) |
+| Node/TS boundaries | `cp $PACK/configs/architecture/.dependency-cruiser.cjs .` |
+| EditorConfig | `cp $PACK/configs/ci/.editorconfig .` |
+| CI | `mkdir -p .github/workflows && cp $PACK/configs/ci/github-actions-clean-code.yml .github/workflows/clean-code.yml` (GitLab: `configs/ci/gitlab-ci-clean-code.yml`) |
 
 ## 4. Onboard legacy code without paralyzing the team
 
@@ -122,17 +131,16 @@ import line and give the ticket a deadline.
 ## Acceptance — run these, they must match
 
 ```bash
-python3 clean-code-skills/tools/tests/run_checks.py | tail -1      # → 61/61 checks passed
-python3 clean-code-skills/tools/tests/run_arch_checks.py | tail -1 # → 30/30 arch checks passed
-python3 clean-code-skills/tools/check_links.py | tail -1           # → 273 references, 0 broken links
-python3 clean-code-skills/tools/cc-scan.py clean-code-skills/tools/demo/src/legacy-order-service.ts \
-        clean-code-skills/tools/demo/src/legacy-renderer.ts --no-baseline | sed -n 2p
+python3 tools/tests/run_checks.py | tail -1      # → 61/61 checks passed
+python3 tools/tests/run_arch_checks.py | tail -1 # → 30/30 arch checks passed
+python3 tools/check_links.py | tail -1           # → 275 references, 0 broken links
+python3 tools/cc-scan.py tools/demo/src/legacy-order-service.ts \
+        tools/demo/src/legacy-renderer.ts --no-baseline | sed -n 2p
                                                                     # → 72.0/100 (grade C)
-python3 clean-code-skills/tools/arch-scan.py \
-        clean-code-skills/configs/architecture/demo/python | sed -n 2p
+python3 tools/arch-scan.py configs/architecture/demo/python | sed -n 2p
                                                                     # → 82.0/100 · error=3
-cd clean-code-skills/configs/python && bash lint.sh                # → exit 0
-cd clean-code-skills/configs/js && npx eslint samples/good-example.ts && echo OK   # → OK
+cd configs/python && bash lint.sh                # → exit 0
+cd ../js && npx eslint samples/good-example.ts && echo OK   # → OK
 ```
 
 Scripts are invoked with `bash` on purpose: `cp -r` and zip extraction do not always keep the

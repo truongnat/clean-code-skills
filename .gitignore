@@ -18,3 +18,8 @@ clean-code-report.json
 # `AGENTS.md` in a GLOBAL gitignore; a repo rule outranks it, so this negation keeps
 # the file committable here. (It cost one silently-empty commit to find out.)
 !AGENTS.md
+
+# Third-party verification JARs are downloaded, not vendored (see configs/java/README.md
+# and configs/architecture/demo/java/README.md for the two curl commands).
+javalib/
+*.jar

@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 1.2.1 — 2026-09-11 · Published: flattened layout, no vendored binaries
+
+### Changed
+- **The pack moved to the repo root.** It used to sit in a nested `clean-code-skills/` folder, which
+  meant a GitHub landing page with no README. Every install command now uses a `$PACK` variable set
+  once at the top of `INSTALL.md`, so it no longer matters where you clone to, and the *Acceptance*
+  block runs verbatim from the repo root (re-run after the move: **61/61**, **30/30**,
+  **275 references 0 broken**, demo **72.0/100**, python arch demo **82.0/100**).
+- **The three verification JARs are no longer vendored** (`checkstyle.jar` 19M, `archunit-1.3.0.jar`
+  4.4M, `slf4j-api-2.0.13.jar` 68K = 23.4M). They are third-party binaries under LGPL-2.1/Apache-2.0
+  and nothing in the pack needs them at install time. `javalib/` and `*.jar` are now ignored, and the
+  two `curl` commands that fetch them live next to the measurements they reproduce
+  (`configs/java/README.md`, `configs/architecture/demo/java/README.md`). Largest tracked file is now
+  56 KB. Note: the blobs remain in commit `048086a`, so a clone still pays for them in history until
+  someone rewrites it.
+
+### Fixed
+- **`AGENTS.md` was never committed** in 1.2.0, despite the commit message saying so: a machine-wide
+  `AGENTS.md` pattern in `~/.gitignore_global` made `git add -A` skip it silently. Force-added, and
+  `.gitignore` now carries `!AGENTS.md` — a repo rule outranks the global one, so it cannot happen
+  again to anyone sharing that pattern. The lesson is in the file: a commit message is not evidence;
+  `git show --stat` is.
+
+### Still not verified
+- The Java rows (Checkstyle, ArchUnit) could not be re-run after the move — there is no JDK in this
+  sandbox, same as `golangci-lint`. The relative classpath in the ArchUnit demo was updated to
+  `../../../../javalib/…` by path arithmetic, not by execution. Marked here so nobody mistakes it
+  for a measured result.
+
+---
+
 ## 1.2.0 — 2026-09-11 · Five providers, one standard
 
 ### Added
@@ -38,7 +69,7 @@
 - Direct fetches of the vendor docs failed in this sandbox (DNS blocked); the paths come from search
   results, which is a weaker source than the doc itself. Treat the four unexecuted rows as a
   starting point to confirm, not as tested fact.
-- `tools/check_links.py` → **273 references, 0 broken** (was 264; `AGENTS.md` adds 8).
+- `tools/check_links.py` → **275 references, 0 broken** (was 264; `AGENTS.md` adds 8).
   `run_checks.py` **61/61**, `run_arch_checks.py` **30/30**, both unchanged by this release.
 
 ---
@@ -171,8 +202,8 @@ Numbers quoted inside the last batch were re-measured rather than carried over:
 | What | Was written | Re-measured on the release date |
 |---|---|---|
 | `tools/tests/run_checks.py` | 60/60 | **61/61** (the docs guard makes 61) |
-| `tools/check_links.py` | 200 references | **273 references, 0 broken** |
-| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 273 references** — the acceptance block was re-run line by line and now matches its own output |
+| `tools/check_links.py` | 200 references | **275 references, 0 broken** |
+| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 275 references** — the acceptance block was re-run line by line and now matches its own output |
 | `tools/demo` legacy line numbers | 17 / 48 / 55, "5 levels", 1 TODO | **15 / 50 / 56, 7 levels, 2 TODOs** — the score is unchanged at **72.0/100 (4 errors)** |
 | `cc-scan.py` self-review | 32.8/100, error=11 warning=23 info=1 | `tools/` (5 files) **0.0/100, error=18 warning=46 info=2**; `cc-scan.py` alone **35.8/100, error=11 warning=20 info=1**; raw defaults **0.0/100** |
 | `cc-scan.py` accepted-debt counts | MAGIC_NUMBER 41, DEBUG_STATEMENT 20, DEEP_NESTING 15 | across `tools/`: **MAGIC_NUMBER 55, DEBUG_STATEMENT 46, DEEP_NESTING 32, HARD_COMPLEXITY 12, HUGE_FUNCTION 5** |

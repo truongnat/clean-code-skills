@@ -54,15 +54,17 @@ python3 tools/check_links.py             # -> every relative reference resolves
 ## Install into your project
 
 ```bash
+PACK=/path/to/this/clone     # run the rest from your project root
+
 # Every provider: one portable instructions page (Codex, Cursor, Grok, Antigravity all read it)
-cp clean-code-skills/AGENTS.md .
-cp clean-code-skills/tools/*.py tools/                       # so the skills can call the scanners
+cp $PACK/AGENTS.md .
+cp $PACK/tools/*.py tools/                       # so the skills can call the scanners
 
 # Claude Code — skills are auto-discovered
-cp -r clean-code-skills/skills/clean-* .claude/skills/       # per repo (or ~/.claude/skills/)
+cp -r $PACK/skills/clean-* .claude/skills/       # per repo (or ~/.claude/skills/)
 
 # Antigravity — same SKILL.md format, different folder
-cp -r clean-code-skills/skills/clean-* .agents/skills/
+cp -r $PACK/skills/clean-* .agents/skills/
 
 # Grok — already covered: it reads .claude/ and the AGENTS.md family. Confirm with `grok inspect`
 # Cursor — needs .mdc frontmatter, not a plain copy: see INSTALL.md §1
@@ -99,7 +101,7 @@ Per-provider paths, verification commands, and which rows were actually executed
 | **ArchUnit 1.3.0 (JDK 11)** | `configs/architecture/demo/java` | 3 rules **BROKEN → KEPT** on the same code shape, exit 1 → 0 |
 | pre-commit hooks | `hooks/check-hygiene.sh`, `hooks/check-arch.sh` in a temp git repo | dirty staged file → **exit 1** naming the exact lines; clean → **exit 0** |
 | CI templates | `yaml.safe_load` on all 4 YAML files (`configs/ci/*.yml`, `configs/ci/.pre-commit-config.yaml`, `configs/go/.golangci.yml`) | parse OK; jobs/steps/hooks contain the `arch-scan` + `cc-scan` gates. The commands themselves need a runner — each one is the tested CLI above |
-| Docs cross-references | `python3 tools/check_links.py` | **273 references checked, 0 broken** · the checker itself scores **100.0/100** under `cc-scan` when run from `tools/` (where `clean-code.config.json` skips `DEBUG_STATEMENT`/`MAGIC_NUMBER` for CLI scripts); 95.8 from the pack root, where that config is not loaded — that gap is the config-scoping rule documented in `tools/README.md` §3, not a bug |
+| Docs cross-references | `python3 tools/check_links.py` | **275 references checked, 0 broken** · the checker itself scores **100.0/100** under `cc-scan` when run from `tools/` (where `clean-code.config.json` skips `DEBUG_STATEMENT`/`MAGIC_NUMBER` for CLI scripts); 95.8 from the pack root, where that config is not loaded — that gap is the config-scoping rule documented in `tools/README.md` §3, not a bug |
 | One standard everywhere | thresholds 120 / 40 / 3 params / complexity 10 repeated in `cc-scan`, ESLint, ruff, Checkstyle, golangci, `.editorconfig` | read by hand + asserted in `run_checks.py` |
 | Provider install paths | Claude Code: executed in this sandbox (`.claude/skills/` discovered, 7 skills listed). Codex · Cursor · Grok · Antigravity: **transcribed from vendor docs, not run** — no licence/IDE here | the Cursor `.mdc` generator **was** run: 201 lines, exactly one frontmatter block, no leaked `name:` key. Every row carries a Verify command in `INSTALL.md` §1 — trust it over the table |
 | golangci-lint | **not run** | no Go toolchain in this sandbox; `configs/go/README.md` says so. `demo/*.go` were scanned by `cc-scan`, and `.golangci.yml` (incl. the new `depguard` rules) parses as valid YAML |

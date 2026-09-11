@@ -23,7 +23,8 @@ clean-code-skills/
 │   ├── tests/                       ← 61 + 30 assertions run against real fixtures (no mocks)
 │   └── demo/                        ← one business feature: legacy (72/100) vs refactored (100/100)
 ├── configs/         ⑤ Working configs: JS/TS · Python · Java · Go · CI · Sonar · hooks · architecture
-└── AGENTS.md        ⑥ The portable one-pager every agent reads (Codex/Cursor/Grok/Antigravity)
+├── AGENTS.md        ⑥ The portable one-pager every agent reads (Codex/Cursor/Grok/Antigravity)
+└── .github/         ⑦ The pack gating itself: suites + links + dogfood on every push
 ```
 
 Three layers, one standard: **machines enforce what is measurable** (`tools/`, `configs/`) →
@@ -96,15 +97,16 @@ Per-provider paths, verification commands, and which rows were actually executed
 | `arch-scan.py` v1.0.0 | `tools/tests/run_arch_checks.py` | **30/30 PASS** — 4 error rules fire on `layers/dirty`, `layers/clean` = **100.0/100 (0 findings)**, Java/Go imports resolved via `rootPackages`, allow-comment scoped per line, drift detection works |
 | ESLint 9.39 + Prettier | `npm run check` in `configs/js` | configs parse · `samples/good-example.ts` = **0 problems** · the 2 deliberate bad samples = 10 problems, right rules |
 | ruff 0.16 + black + mypy | `configs/python/lint.sh` | `orders_good.py` passes all three · `orders_bad.py` = **39 errors** (ANN001 x9, EM101 x3, TRY002 x2, T201 x2, S110, E722, C901, PLR0912/0915/0917, PLR2004, E711…) |
-| Checkstyle 10.21.4 | `java -jar checkstyle.jar -c configs/java/checkstyle.xml configs/java/demo/OrderTotalsBad.java` | **8 audit messages** on the bad demo = 7 WARN (1 `ParameterNumber`, 5 `MagicNumber`, 1 `EmptyCatchBlock`) + 1 INFO (`TodoComment`); `OrderTotalsGood.java` = **0** |
+| Checkstyle 10.21.4 | `java -jar checkstyle.jar -c configs/java/checkstyle.xml configs/java/demo/OrderTotalsBad.java` (measured 2026-09-10) | **8 audit messages** on the bad demo = 7 WARN (1 `ParameterNumber`, 5 `MagicNumber`, 1 `EmptyCatchBlock`) + 1 INFO (`TodoComment`); `OrderTotalsGood.java` = **0** |
 | **import-linter 2.15** | `configs/architecture/demo/python` | `Layers point inward` + `Domain stays framework-free` **BROKEN → KEPT** after deleting one file (exit 1 → exit 0, "Analyzed 13 files, 14 dependencies") |
 | **ArchUnit 1.3.0 (JDK 11)** | `configs/architecture/demo/java` | 3 rules **BROKEN → KEPT** on the same code shape, exit 1 → 0 |
 | pre-commit hooks | `hooks/check-hygiene.sh`, `hooks/check-arch.sh` in a temp git repo | dirty staged file → **exit 1** naming the exact lines; clean → **exit 0** |
 | CI templates | `yaml.safe_load` on all 4 YAML files (`configs/ci/*.yml`, `configs/ci/.pre-commit-config.yaml`, `configs/go/.golangci.yml`) | parse OK; jobs/steps/hooks contain the `arch-scan` + `cc-scan` gates. The commands themselves need a runner — each one is the tested CLI above |
-| Docs cross-references | `python3 tools/check_links.py` | **291 references checked, 0 broken** · the checker itself scores **100.0/100** under `cc-scan` when run from `tools/` (where `clean-code.config.json` skips `DEBUG_STATEMENT`/`MAGIC_NUMBER` for CLI scripts); 95.8 from the pack root, where that config is not loaded — that gap is the config-scoping rule documented in `tools/README.md` §3, not a bug |
+| Docs cross-references | `python3 tools/check_links.py` | **292 references checked, 0 broken** · the checker itself scores **100.0/100** under `cc-scan` when run from `tools/` (where `clean-code.config.json` skips `DEBUG_STATEMENT`/`MAGIC_NUMBER` for CLI scripts); 95.8 from the pack root, where that config is not loaded — that gap is the config-scoping rule documented in `tools/README.md` §3, not a bug |
 | One standard everywhere | thresholds 120 / 40 / 3 params / complexity 10 repeated in `cc-scan`, ESLint, ruff, Checkstyle, golangci, `.editorconfig` | read by hand + asserted in `run_checks.py` |
+| This repo's own CI | `.github/workflows/self-check.yml` — every step **run locally before committing** | 7 steps green: both suites, `check_links`, a dogfood step that fails if the README's numbers stop reproducing, a guard that fails if the dirty fixtures ever come back clean, and a JSON/YAML parse (7 JSON + 5 YAML). No `pip install` anywhere in it, so the stdlib-only promise stays testable |
 | Provider install paths | Claude Code: executed in this sandbox (`.claude/skills/` discovered, 7 skills listed). Codex · Cursor · Grok · Antigravity: **transcribed from vendor docs, not run** — no licence/IDE here | the Cursor `.mdc` generator **was** run: 201 lines, exactly one frontmatter block, no leaked `name:` key. Every row carries a Verify command in `INSTALL.md` §1 — trust it over the table |
-| golangci-lint | **not run** | no Go toolchain in this sandbox; `configs/go/README.md` says so. `demo/*.go` were scanned by `cc-scan`, and `.golangci.yml` (incl. the new `depguard` rules) parses as valid YAML |
+| golangci-lint | `.golangci.yml` parsed (`yaml.safe_load`) + `demo/*.go` scanned by `cc-scan` | config valid: 4 top-level keys, 36 linters, 2 `depguard` rule sets, 2 exclusions. The linter itself needs a Go toolchain — see `configs/go/README.md` |
 
 ## What to read, depending on the question
 
@@ -123,3 +125,5 @@ Per-provider paths, verification commands, and which rows were actually executed
 4. Refactoring without tests is a gamble, not bravery — every technique here starts by locking behaviour.
 
 `CHANGELOG.md` · `tools/SELF_REVIEW.md` (the tools reviewed by themselves, including the debt table).
+
+MIT licensed — copy it into your repo, change it, ship it. See `LICENSE`.

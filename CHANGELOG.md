@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## 1.4.0 — 2026-09-11 · MIT licence, the pack gates itself, one debt paid
+
+### Added
+- **`LICENSE` (MIT).** The repo was public with no licence, which legally means "all rights
+  reserved" — the opposite of a pack whose install instructions are "copy this into your repo".
+- **`.github/workflows/self-check.yml` — the pack now gates itself.** Every step was **run locally
+  before it was committed**: both suites, `check_links.py`, and three guards that did not exist
+  before:
+  - a **dogfood step** that re-derives the demo numbers and fails if the README stops reproducing
+    them (legacy 72.0/4 errors · refactored 100.0/0 · python arch demo 82.0/3). A stale number in
+    the README is the exact defect this repo exists to prevent, so it is now a build failure.
+  - a **fixtures guard** that fails if `fixtures/messy` or `layers/dirty` ever come back *clean* —
+    if the deliberately broken code stops being broken, the 91 assertions are measuring nothing.
+  - a JSON/YAML parse over 7 JSON and 5 YAML files.
+  It deliberately does **not** run `cc-scan .` over the repo root: that scores 0.0/100 with 38
+  errors *by design*, and a permanently red build teaches people to ignore the build. It also
+  contains no `pip install`, so the stdlib-only promise stays testable.
+
+### Fixed — the first declared debt actually paid
+- **`arch-scan._finding` no longer trips `HARD_PARAMS`.** The debt ledger proposed a dataclass. The
+  code said otherwise: all 7 call sites passed all 6 arguments, so `value=None, hint=""` were fake
+  defaults, and `hint` never varied per call site — it is a property of the *rule*, not of the call.
+  Moving it into a `HINTS` table beside the existing `EXPLAIN` table removed the parameter, deleted
+  7 duplicated hint strings, and cleared the error. **JSON output is byte-identical** before and
+  after on both the python demo and the dirty fixture (verified by diffing the reports), 30/30 and
+  61/61 green. `tools/` drops from error=18 to **error=17**.
+  A Parameter Object would have moved the smell into a new class instead of removing it — recorded
+  as lesson 6 in `tools/SELF_REVIEW.md`.
+
+### Changed
+- **The scanners on `PATH` are now part of the install, not a side note.** `INSTALL.md` §2 offers
+  two mutually exclusive options — per-repo copy, or one symlink pair per machine — with the
+  `PATH` check and the `export` line for shells that need it.
+- The Checkstyle and golangci-lint rows in `README.md` say what was measured and when, instead of
+  carrying a paragraph of hedging. Checkstyle: measured 2026-09-10. golangci-lint: the config is
+  parsed and validated here (4 keys, 36 linters, 2 `depguard` sets); running the linter needs a Go
+  toolchain, which is a property of the environment, not an open question about the config.
+
+---
+
 ## 1.3.0 — 2026-09-11 · Global install, one source of truth
 
 ### Added
@@ -46,7 +86,7 @@
   meant a GitHub landing page with no README. Every install command now uses a `$PACK` variable set
   once at the top of `INSTALL.md`, so it no longer matters where you clone to, and the *Acceptance*
   block runs verbatim from the repo root (re-run after the move: **61/61**, **30/30**,
-  **291 references 0 broken**, demo **72.0/100**, python arch demo **82.0/100**).
+  **292 references 0 broken**, demo **72.0/100**, python arch demo **82.0/100**).
 - **The three verification JARs are no longer vendored** (`checkstyle.jar` 19M, `archunit-1.3.0.jar`
   4.4M, `slf4j-api-2.0.13.jar` 68K = 23.4M). They are third-party binaries under LGPL-2.1/Apache-2.0
   and nothing in the pack needs them at install time. `javalib/` and `*.jar` are now ignored, and the
@@ -108,7 +148,7 @@
 - Direct fetches of the vendor docs failed in this sandbox (DNS blocked); the paths come from search
   results, which is a weaker source than the doc itself. Treat the four unexecuted rows as a
   starting point to confirm, not as tested fact.
-- `tools/check_links.py` → **291 references, 0 broken** (was 264; `AGENTS.md` adds 8).
+- `tools/check_links.py` → **292 references, 0 broken** (was 264; `AGENTS.md` adds 8).
   `run_checks.py` **61/61**, `run_arch_checks.py` **30/30**, both unchanged by this release.
 
 ---
@@ -241,8 +281,8 @@ Numbers quoted inside the last batch were re-measured rather than carried over:
 | What | Was written | Re-measured on the release date |
 |---|---|---|
 | `tools/tests/run_checks.py` | 60/60 | **61/61** (the docs guard makes 61) |
-| `tools/check_links.py` | 200 references | **291 references, 0 broken** |
-| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 291 references** — the acceptance block was re-run line by line and now matches its own output |
+| `tools/check_links.py` | 200 references | **292 references, 0 broken** |
+| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 292 references** — the acceptance block was re-run line by line and now matches its own output |
 | `tools/demo` legacy line numbers | 17 / 48 / 55, "5 levels", 1 TODO | **15 / 50 / 56, 7 levels, 2 TODOs** — the score is unchanged at **72.0/100 (4 errors)** |
 | `cc-scan.py` self-review | 32.8/100, error=11 warning=23 info=1 | `tools/` (5 files) **0.0/100, error=18 warning=46 info=2**; `cc-scan.py` alone **35.8/100, error=11 warning=20 info=1**; raw defaults **0.0/100** |
 | `cc-scan.py` accepted-debt counts | MAGIC_NUMBER 41, DEBUG_STATEMENT 20, DEEP_NESTING 15 | across `tools/`: **MAGIC_NUMBER 55, DEBUG_STATEMENT 46, DEEP_NESTING 32, HARD_COMPLEXITY 12, HUGE_FUNCTION 5** |

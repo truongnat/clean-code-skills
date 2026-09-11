@@ -1,0 +1,106 @@
+# The pack gating itself. A standard that does not run on its own repo is a leaflet.
+#
+# Deliberately NOT `cc-scan .`: the root of this repo scores 0.0/100 with 38 errors *by design*,
+# because tools/tests/fixtures/ is code that must be broken for the tests to mean anything.
+# What is worth gating is the thing that would actually rot: the suites, the cross-references,
+# and the numbers this repo prints in its own README.
+name: self-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  suites:
+    name: suites + docs + dogfood
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # No pip install anywhere in this file, on purpose: both scanners are stdlib-only, and a
+      # dependency here would quietly break that promise.
+      - name: Unit suites
+        run: |
+          python3 tools/tests/run_checks.py
+          python3 tools/tests/run_arch_checks.py
+
+      - name: Docs cross-references resolve
+        run: python3 tools/check_links.py
+
+      - name: Dogfood — the demo still scores what the README claims
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, sys
+
+          def scan(paths, extra=()):
+              out = subprocess.run([sys.executable, "tools/cc-scan.py", *paths,
+                                    "--no-baseline", "--json", *extra],
+                                   capture_output=True, text=True)
+              return json.loads(out.stdout)
+
+          legacy = scan(["tools/demo/src/legacy-order-service.ts",
+                         "tools/demo/src/legacy-renderer.ts"])
+          clean = scan(["tools/demo/src/order-service.ts",
+                        "tools/demo/src/order-service.test.ts"])
+          arch = json.loads(subprocess.run(
+              [sys.executable, "tools/arch-scan.py", "configs/architecture/demo/python",
+               "--json", "--fail-on", "none"],
+              capture_output=True, text=True).stdout)
+
+          expected = [
+              ("legacy demo score", legacy["score"], 72.0),
+              ("legacy demo errors", legacy["counts"]["error"], 4),
+              ("refactored demo score", clean["score"], 100.0),
+              ("refactored demo findings", len(clean["findings"]), 0),
+              ("python arch demo score", arch["score"], 82.0),
+              ("python arch demo errors", arch["counts"]["error"], 3),
+          ]
+          bad = [(k, got, want) for k, got, want in expected if got != want]
+          for k, got, want in expected:
+              print(f"{'FAIL' if (k, got, want) in bad else 'ok  '} {k}: {got} (README says {want})")
+          if bad:
+              print("\nThe README quotes numbers this build does not reproduce. Fix the code or "
+                    "fix the README - a stale number is the defect this repo exists to prevent.")
+              raise SystemExit(1)
+          PY
+
+      - name: Fixtures are still broken on purpose
+        run: |
+          # If the dirty fixtures ever come back clean, the test suite is measuring nothing.
+          python3 tools/cc-scan.py tools/tests/fixtures/messy --no-baseline --fail-on error \
+            && { echo "messy/ fixture reports no error - the suite has lost its teeth"; exit 1; } \
+            || echo "ok: messy/ still fails as designed"
+          python3 tools/arch-scan.py tools/tests/fixtures/layers/dirty --fail-on error \
+            && { echo "layers/dirty reports no error - same problem"; exit 1; } \
+            || echo "ok: layers/dirty still fails as designed"
+
+      - name: Configs still parse
+        run: |
+          python3 - <<'PY'
+          import glob, json
+          try:
+              import yaml
+          except ImportError:
+              print("PyYAML absent; skipping the YAML parse (it is checked locally)")
+              yaml = None
+          for f in sorted(glob.glob("**/*.json", recursive=True)):
+              if "node_modules" in f or "package-lock" in f:
+                  continue
+              json.load(open(f))
+          print("JSON: all parse")
+          if yaml:
+              files = (glob.glob("configs/ci/*.yml") + glob.glob("configs/ci/.*.yaml")
+                       + [".github/workflows/self-check.yml", "configs/go/.golangci.yml"])
+              for f in files:
+                  yaml.safe_load(open(f))
+              print(f"YAML: {len(files)} files parse")
+          PY

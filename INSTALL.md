@@ -142,12 +142,26 @@ python3 tools/cc-scan.py . --fail-on none | head -2     # prints your current sc
 python3 tools/arch-scan.py . --fail-on none | head -8   # layer census + dependency matrix
 ```
 
-Want the skills to always find the scripts, even in a repo without `tools/`:
+Want the skills to always find the scripts, even in a repo without `tools/`? Two options — do
+either, not both:
 
 ```bash
+# (a) per repo: the skill carries its own copy
 mkdir -p .claude/skills/clean-code/tools
 cp $PACK/tools/{cc-scan.py,arch-scan.py} .claude/skills/clean-code/tools/
+
+# (b) once per machine: the scanners on PATH, usable from any repo. Do this if you followed §1b
+mkdir -p ~/.local/bin
+ln -sfn "$PACK/tools/cc-scan.py"   ~/.local/bin/cc-scan
+ln -sfn "$PACK/tools/arch-scan.py" ~/.local/bin/arch-scan
+chmod +x "$PACK/tools/cc-scan.py" "$PACK/tools/arch-scan.py"
+cc-scan --version && arch-scan --version        # -> 1.0.1 / 1.0.0
 ```
+
+`~/.local/bin` must be on your `PATH` (`echo $PATH | tr : '\n' | grep local/bin`); add
+`export PATH="$HOME/.local/bin:$PATH"` to your shell rc if it is not. Every `SKILL.md` states this
+fallback, so an agent working in a repo with no `tools/` folder will reach for `cc-scan` instead of
+reporting the command as missing.
 
 `arch-scan` needs one thing `cc-scan` does not: a **declared layer map**. Without a config it still
 works (it reports `UNCLASSIFIED_FILES` rather than pretending), but you should copy the template:
@@ -190,7 +204,7 @@ import line and give the ticket a deadline.
 ```bash
 python3 tools/tests/run_checks.py | tail -1      # → 61/61 checks passed
 python3 tools/tests/run_arch_checks.py | tail -1 # → 30/30 arch checks passed
-python3 tools/check_links.py | tail -1           # → 291 references, 0 broken links
+python3 tools/check_links.py | tail -1           # → 292 references, 0 broken links
 python3 tools/cc-scan.py tools/demo/src/legacy-order-service.ts \
         tools/demo/src/legacy-renderer.ts --no-baseline | sed -n 2p
                                                                     # → 72.0/100 (grade C)

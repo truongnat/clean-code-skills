@@ -16,15 +16,14 @@ runners. The numbers below are from that run on the release date.
 | `DEEP_NESTING` | 32 | `find_empty_catch` nests 8 deep, `scan_file` 11 — sequential parsing again; inverting the conditions breaks the "one line = one step" reading order. |
 | `MAGIC_NUMBER` | 55 (42 of them in `cc-scan.py`) | The `DEFAULTS` table (120/40/3/10) **must** sit in the code so the tool needs no config file. Switched off at the `tools/` level through `skipRules` plus the reason in `clean-code.config.json`. |
 | `DEBUG_STATEMENT` (`print(`) | 46 (20 in `cc-scan.py`) | These are CLIs — printing to stdout is **the feature**, not litter. Also in `skipRules`. |
-| `TOO_MANY_PARAMS` / `LONG_FUNCTION` / `COMPLEXITY` | 4 / 3 / 6 | Internal functions threading `(path, root, cfg, is_test)` — collapsible into a `ScanCtx` if the tool grows more rules. |
-| `HARD_PARAMS` (`arch-scan._finding`, 6 params) | 1 | A finding constructor with positional fields; a record type is the fix, and it is on the debt list below rather than pretended away. |
+| `TOO_MANY_PARAMS` / `LONG_FUNCTION` / `COMPLEXITY` | 5 / 3 / 6 | Internal functions threading `(path, root, cfg, is_test)` — collapsible into a `ScanCtx` if the tool grows more rules. |
 | `BOOLEAN_PARAM` (`scan_file(..., is_test)`) | 1 | Splitting it into two functions duplicates the body; the trade is not worth it yet. |
 
 Today's measurements (runnable, so you can re-check them):
 
 ```bash
 $ cd tools && python3 cc-scan.py . --no-baseline
-Clean Code score: 0.0/100 (grade E)  · error=18 warning=46 info=2   # tools/ uses clean-code.config.json
+Clean Code score: 0.0/100 (grade E)  · error=17 warning=47 info=2   # tools/ uses clean-code.config.json
 $ python3 cc-scan.py cc-scan.py --no-baseline
 Clean Code score: 35.8/100 (grade E)  · error=11 warning=20 info=1  # cc-scan.py on its own
 $ # measured raw against DEFAULTS (MAGIC_NUMBER + DEBUG_STATEMENT back on): 0.0/100 (grade E)
@@ -65,6 +64,15 @@ The rule it applies to itself: an exception must be (1) **explicit** in a config
    `run_checks.py` (61/61 checks passed).
 5. A rule only earns its place if it **catches what humans get lazy about** (debug logs, empty
    catches, dead code) and **does not ask a human to do a machine's job** (layout aesthetics).
+6. **The tool found a real defect in itself, and the fix was not the one on the debt list.**
+   `HARD_PARAMS` fired on `arch-scan._finding(rule, rel, line, message, value, hint)`. The ledger
+   proposed a dataclass. But all 7 call sites passed all 6 arguments, so the two "optional"
+   parameters were fake defaults — and `hint` never varied per call site: it is a property of the
+   *rule*, not of the call. Moving it into a `HINTS` table next to the existing `EXPLAIN` table
+   removed the parameter, deleted 7 duplicated strings, and dropped the error. Byte-identical JSON
+   output before and after, 30/30 green. The lesson: a parameter that is always passed is not
+   optional, and a value that never varies does not belong in a signature. A Parameter Object would
+   have preserved the smell inside a new class.
 
 ## Remaining debt (open, on purpose — not "refactor later")
 
@@ -74,7 +82,6 @@ The rule it applies to itself: an exception must be (1) **explicit** in a config
 | `DUPLICATE_BLOCK` only finds **byte-identical** blocks | duplication with renamed variables slips through | normalise identifiers + an `ast` dump; roughly 10× more expensive |
 | No **repo-wide duplication ratio** (% of lines) | no number to set the 3% gate against | add `--dup-ratio` |
 | `COMPLEXITY` is approximate (keyword counting), not true cyclomatic | ±20% off in functions with many ternaries | the docstring already says "heuristic"; call `lizard`/`radon` in CI if you need the real number |
-| `HARD_PARAMS` on `arch-scan._finding` | the tool reports its own 6-parameter constructor | turn it into a dataclass/record; XS, and worth doing the next time that file is touched |
 | Does not read a PR's diff (it scans the paths you pass) | reports old findings in a file you touched | `--changed-since origin/main` using `git diff -U0` to filter by hunk |
 
 There is no deadline on that table — **on purpose**. Every tool carries debt; the difference is

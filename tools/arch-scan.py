@@ -94,6 +94,29 @@ RULES: dict = {
     "LAYER_UNUSED": ("a declared layer matches no file at all", "info"),
 }
 
+# One hint per rule: the sentence a human acts on. It never varied per call site, so it lives
+# here instead of being retyped at each `_finding(...)` - that is what kept the constructor at
+# six parameters (HARD_PARAMS on the tool's own scan).
+HINTS = {
+    "UPWARD_DEPENDENCY":
+        "Point the dependency inward: own the abstraction here, let the outer layer implement it.",
+    "LAYER_CYCLE":
+        "Break the ring with a port or an event — inside a cycle no layer can be tested or "
+        "replaced alone.",
+    "DOMAIN_FRAMEWORK_IMPORT":
+        "Declare a port (interface) in this layer, implement it in infrastructure, wire it at "
+        "the composition root.",
+    "BOUNDARY_LEAK":
+        "Import the feature's public API, publish an event, or move the shared piece into a "
+        "kernel.",
+    "UNCLASSIFIED_FILES":
+        "Add their folders to a layer in arch-scan.config.json, or admit the code has no "
+        "architecture yet.",
+    "LAYER_UNUSED":
+        "Delete the layer from the config or create it in the repo — a diagram nobody implements "
+        "is worse than no diagram.",
+}
+
 EXPLAIN = {
     "UPWARD_DEPENDENCY":
         "The dependency rule: source code dependencies point inwards, towards the domain. A "
@@ -331,11 +354,11 @@ def allow_map(text: str) -> dict[int, set[str]]:
     return allowed
 
 
-def _finding(rule: str, rel: str, line: int, message: str, value=None, hint: str = "") -> dict:
-    """One violation. `value` is the machine-facing key (pair, package, ring),
-    `hint` is the sentence a human acts on."""
+def _finding(rule: str, rel: str, line: int, message: str, value) -> dict:
+    """One violation. `value` is the machine-facing key (pair, package, ring); the human-facing
+    `hint` comes from HINTS, because it is a property of the rule, not of the call site."""
     return {"rule": rule, "severity": RULES[rule][1], "file": rel, "line": line,
-            "message": message, "value": value, "hint": hint}
+            "message": message, "value": value, "hint": HINTS[rule]}
 
 
 def find_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
@@ -419,9 +442,7 @@ def scan_tree(root: Path, cfg: dict, files: list[Path]) -> dict:
                         findings.append(_finding(
                             "DOMAIN_FRAMEWORK_IMPORT", rel, line_no,
                             f"`{spec}` is a driver/framework import in the '{src_layer}' layer",
-                            f"{src_layer}:{banned}",
-                            "Declare a port (interface) in this layer, implement it in "
-                            "infrastructure, wire it at the composition root."))
+                            f"{src_layer}:{banned}"))
                 continue
             tgt_boundary = layout.boundary_of(target) if target else None
             if src_boundary and tgt_boundary and src_boundary[0] == tgt_boundary[0] \
@@ -433,9 +454,7 @@ def scan_tree(root: Path, cfg: dict, files: list[Path]) -> dict:
                     findings.append(_finding(
                         "BOUNDARY_LEAK", rel, line_no,
                         f"feature '{src_boundary[1]}' imports '{tgt_boundary[1]}' internals "
-                        f"({target})", f"{pair[0]}->{pair[1]}",
-                        "Import the feature's public API, publish an event, or move the shared "
-                        "piece into a kernel."))
+                        f"({target})", f"{pair[0]}->{pair[1]}"))
 
             if not src_layer or not tgt_layer or tgt_layer == src_layer:
                 continue
@@ -446,9 +465,7 @@ def scan_tree(root: Path, cfg: dict, files: list[Path]) -> dict:
                 findings.append(_finding(
                     "UPWARD_DEPENDENCY", rel, line_no,
                     f"'{src_layer}' imports outward into '{tgt_layer}' via `{spec}`",
-                    f"{src_layer}->{tgt_layer}",
-                    "Point the dependency inward: own the abstraction here, let the outer "
-                    "layer implement it."))
+                    f"{src_layer}->{tgt_layer}"))
 
     findings.extend(_cycle_findings(graph, edges))
     findings.extend(_drift_findings(cfg, files, hits, unclassified))
@@ -462,9 +479,7 @@ def _cycle_findings(graph: dict[str, set[str]], edges: dict) -> list[dict]:
         arrows = ", ".join(f"{a}->{b}" for a, b in zip(ring, ring[1:] + ring[:1]))
         where = next((f for layer in ring for f in edges.get((layer, ring[0]), [])), "(project)")
         out.append(_finding("LAYER_CYCLE", where, 0,
-                      f"Layers depend on each other in a ring: {arrows}", "+".join(ring),
-                      "Break the ring with a port or an event — inside a cycle no layer can be "
-                      "tested or replaced alone."))
+                      f"Layers depend on each other in a ring: {arrows}", "+".join(ring)))
     return out
 
 
@@ -477,15 +492,11 @@ def _drift_findings(cfg: dict, files: list[Path], hits: dict[str, int],
     if total and pct > limit:
         out.append(_finding("UNCLASSIFIED_FILES", "(project)", 0,
                       f"{len(unclassified)}/{total} code files ({pct}%) match no declared layer "
-                      f"(threshold {limit}%)", pct,
-                      "Add their folders to a layer in arch-scan.config.json, or admit the code "
-                      "has no architecture yet."))
+                      f"(threshold {limit}%)", pct))
     for name, count in sorted(hits.items()):
         if count == 0:
             out.append(_finding("LAYER_UNUSED", "(config)", 0,
-                          f"Declared layer '{name}' matches no file", name,
-                          "Delete the layer from the config or create it in the repo — a diagram "
-                          "nobody implements is worse than no diagram."))
+                          f"Declared layer '{name}' matches no file", name))
     return out
 
 

@@ -56,6 +56,13 @@ python3 tools/check_links.py             # -> every relative reference resolves
 ## Install into your project
 
 ```bash
+# Every agent on the machine, one command (this repo is a skills.sh package):
+npx skills add truongnat/clean-code-skills --all -g
+```
+
+Or by hand, if you would rather not use the CLI:
+
+```bash
 PACK=/path/to/this/clone     # run the rest from your project root
 
 # Every provider: one portable instructions page (Codex, Cursor, Grok, Antigravity all read it)

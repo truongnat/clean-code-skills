@@ -76,7 +76,72 @@ Frontmatter needs `name` + `description` (already there). `description` is what 
 refactor, code review, naming, error handling, magic number, architecture, layers, dependency rule,
 quality gate*.
 
-## 1b. Or install once, globally, for every provider
+## 1b. Install globally with one command (recommended)
+
+This repo is a [skills.sh](https://skills.sh) package: a public repo whose `skills/*/SKILL.md`
+folders the `skills` CLI can read. There is no registry submission — a public repo *is* the
+publication. One command installs the pack for every agent on the machine:
+
+```bash
+npx skills add truongnat/clean-code-skills --all -g
+```
+
+`--all` is shorthand for `--skill '*' --agent '*' -y`; drop `-g` to install into the current project
+instead. Verify:
+
+```bash
+npx skills list -g | grep -A1 clean-code          # 7 entries, Source: truongnat/clean-code-skills
+npx skills update -g -y                           # later: pull new versions
+npx skills remove clean-code                      # and uninstall cleanly
+```
+
+What it does: writes the skills into the hub at `~/.agents/skills/`, records them in
+`~/.agents/.skill-lock.json`, and symlinks the hub into each agent's own skills directory. That
+lock file is what makes `update` and `remove` work — the reason to prefer this over copying by hand.
+
+### Two CLI defects worth knowing (observed 2026-09-11, `skills@latest`)
+
+Both were hit while installing this pack, and "Done!" was printed in each case:
+
+1. **A comma-separated agent list is rejected.** `-a codex,cursor` fails with
+   `Invalid agents: codex,cursor` — even though the error message then lists `codex` and `cursor`
+   among the valid agents. Repeat the flag instead: `-a codex -a cursor`.
+2. **Some agents get a lock-file entry but no symlink.** After `--all -g`, the lock recorded 66
+   agents, yet `~/.codex/skills` and `~/.cursor/skills` contained nothing. The skills existed only
+   in the hub. Always verify per agent rather than trusting the summary:
+
+```bash
+for d in ~/.claude/skills ~/.codex/skills ~/.grok/skills ~/.cursor/skills ~/.gemini/config/skills; do
+  printf '%-34s %s/7\n' "$d" "$(ls -A "$d" | grep -c '^clean')"
+done
+```
+
+If a directory shows 0, link the hub into it by hand — this survives a later `npx skills update`,
+which was verified:
+
+```bash
+for s in clean-code clean-architecture clean-code-review clean-code-naming \
+         clean-code-refactoring clean-code-error-handling clean-code-formatting-hooks; do
+  ln -sfn "$HOME/.agents/skills/$s" "$HOME/.codex/skills/$s"
+done
+```
+
+### Developing the pack rather than consuming it
+
+A `skills.sh` install is a **copy** of the published repo, so editing your clone changes nothing
+until you publish. While you are writing skills, point the hub at your working tree instead:
+
+```bash
+for s in clean-code clean-architecture clean-code-review clean-code-naming \
+         clean-code-refactoring clean-code-error-handling clean-code-formatting-hooks; do
+  ln -sfn "$PACK/skills/$s" "$HOME/.agents/skills/$s"
+done
+```
+
+Every agent then sees your edits immediately. `npx skills update` will replace those symlinks with
+copies again — which is the correct behaviour for a consumer, and the thing to re-run the loop after.
+
+## 1b-manual. Installing by hand, without the CLI
 
 If you want the standard available in **every** repo without copying it into each one, use one
 source of truth and symlink it. This is the recipe that was **executed on a real machine** with all

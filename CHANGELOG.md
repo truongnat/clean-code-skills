@@ -1,5 +1,49 @@
 # CHANGELOG
 
+## 1.6.0 — 2026-09-11 · It was already publishable: skills.sh is the install now
+
+### The answer to "can this go on skills.sh"
+It was there the moment the repo went public. [skills.sh](https://skills.sh) has **no submission
+flow** — `npx skills --help` offers `add / use / remove / list / find / update / init` and no
+`publish`. A public repo with `skills/*/SKILL.md` folders *is* the package; discovery happens
+through install telemetry. Verified against the real CLI before writing any of this down:
+
+```
+◇  Source: https://github.com/truongnat/clean-code-skills.git
+◇  Repository cloned
+◇  Found 7 skills
+```
+
+### Changed
+- **`npx skills add truongnat/clean-code-skills --all -g` is now the documented install**, in both
+  `README.md` and `INSTALL.md` §1b. The hand-rolled symlink recipe moved to §1b-manual.
+- The machine this was developed on was migrated to it: the seven hand-made symlinks were removed
+  and reinstalled through the CLI. `~/.agents/.skill-lock.json` now carries 7 `clean-*` entries
+  sourced from `truongnat/clean-code-skills`, so `update` and `remove` work — which hand-made
+  symlinks never supported.
+
+### Discovered — `~/.agents/skills` is skills.sh's hub
+Another correction to 1.3.0. That directory is not "a hub belonging to some skill manager" as
+recorded, and not an Antigravity path: it is **skills.sh's** hub, and the CLI symlinks it into every
+agent's skills directory. The hand-built §1b recipe was re-implementing, badly, what the tool
+already did. `~/.gemini/config/skills` being a symlink to it was skills.sh's doing too.
+
+### Two CLI defects, documented because "Done!" was printed both times
+1. `-a codex,cursor` → `Invalid agents: codex,cursor`, while the same error lists `codex` and
+   `cursor` as valid. Repeat the flag: `-a codex -a cursor`.
+2. After `--all -g` the lock file claimed 66 agents, but `~/.codex/skills` and `~/.cursor/skills`
+   held **nothing** — the skills existed only in the hub. Both were linked by hand, and a subsequent
+   `npx skills update` was run to confirm those manual links survive it. `INSTALL.md` §1b now ships
+   the per-agent verification loop, because the summary line cannot be trusted.
+
+### Trade-off recorded rather than hidden
+A skills.sh install is a **copy** of the *published* repo, so editing a local clone changes nothing
+until `git push` + `npx skills update`. For someone writing the pack rather than consuming it that
+is a slower loop, so §1b documents how to point the hub back at a working tree — and states plainly
+that `npx skills update` will undo it, which is correct behaviour for a consumer.
+
+---
+
 ## 1.5.0 — 2026-09-11 · Antigravity: read the vendor docs, correct a wrong claim, ship a plugin
 
 Triggered by one question — "why does Antigravity not suggest a slash command?" — which turned out

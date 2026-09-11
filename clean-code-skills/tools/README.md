@@ -14,7 +14,7 @@ lets them run in a pre-commit hook in 0.2 s and on a machine where nothing is in
 python3 cc-scan.py . --fail-on error            # gate CI on errors only
 python3 cc-scan.py src --json -o cc.json        # machine-readable report
 python3 arch-scan.py src --fail-on error        # dependency direction gate
-python3 tests/run_checks.py                     # 60/60 — the suites run on real fixtures
+python3 tests/run_checks.py                     # 61/61 — the suites run on real fixtures
 python3 tests/run_arch_checks.py                # 30/30
 python3 check_links.py                          # every doc reference resolves
 ```
@@ -161,7 +161,7 @@ Commit the baseline file. It is the record of what the team chose not to fix tod
 
 ```
 tests/
-├── run_checks.py          # 60 assertions: rule coverage, false positives, baseline, config, CLI
+├── run_checks.py          # 61 assertions: rule coverage, false positives, baseline, config, CLI, docs guard
 ├── run_arch_checks.py     # 30 assertions: 4 error rules, clean = 100, Java/Go imports, allow, drift
 └── fixtures/
     ├── messy/             # 7 files that must trigger all 20 cc-scan rules (exit 1)

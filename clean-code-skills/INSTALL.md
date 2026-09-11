@@ -81,9 +81,9 @@ import line and give the ticket a deadline.
 ## Acceptance — run these, they must match
 
 ```bash
-python3 clean-code-skills/tools/tests/run_checks.py | tail -1      # → 60/60 checks passed
+python3 clean-code-skills/tools/tests/run_checks.py | tail -1      # → 61/61 checks passed
 python3 clean-code-skills/tools/tests/run_arch_checks.py | tail -1 # → 30/30 arch checks passed
-python3 clean-code-skills/tools/check_links.py | tail -1           # → 200 references, 0 broken links
+python3 clean-code-skills/tools/check_links.py | tail -1           # → 255 references, 0 broken links
 python3 clean-code-skills/tools/cc-scan.py clean-code-skills/tools/demo/src/legacy-order-service.ts \
         clean-code-skills/tools/demo/src/legacy-renderer.ts --no-baseline | sed -n 2p
                                                                     # → 72.0/100 (grade C)

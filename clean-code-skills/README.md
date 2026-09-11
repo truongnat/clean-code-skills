@@ -13,12 +13,13 @@ clean-code-skills/
 │   ├── clean-code-error-handling/   ← exceptions, retry, timeout, no swallowed errors
 │   └── clean-code-formatting-hooks/ ← prettier/ruff/gofmt + pre-commit + CI
 ├── playbook/        ② Team curriculum & policy — 12 sessions (01→12) + 2 appendices
-├── prompts/         ③ Prompt pack — 14 copy-paste prompts for ChatGPT/Copilot/Cursor
+├── prompts/         ③ Prompt pack — 14 copy-paste prompts, each with its minimum input,
+│                     output acceptance criteria, and an anti-hallucination block
 ├── tools/           ④ Two zero-dependency scanners + their test suites
 │   ├── cc-scan.py                   ← module quality: 20 rules (functions, naming, comments, errors, dupes)
 │   ├── arch-scan.py                 ← system quality: 6 rules (dependency direction, cycles, boundaries)
 │   ├── check_links.py               ← proves the docs' 100+ cross-references resolve
-│   ├── tests/                       ← 60 + 30 assertions run against real fixtures (no mocks)
+│   ├── tests/                       ← 61 + 30 assertions run against real fixtures (no mocks)
 │   └── demo/                        ← one business feature: legacy (72/100) vs refactored (100/100)
 └── configs/         ⑤ Working configs: JS/TS · Python · Java · Go · CI · Sonar · hooks · architecture
 ```
@@ -43,7 +44,7 @@ python3 tools/arch-scan.py configs/architecture/demo/python
 #   -> 82.0/100, 3 errors: DOMAIN_FRAMEWORK_IMPORT, UPWARD_DEPENDENCY, LAYER_CYCLE
 
 # the pack's own test suites
-python3 tools/tests/run_checks.py        # -> 60/60
+python3 tools/tests/run_checks.py        # -> 61/61
 python3 tools/tests/run_arch_checks.py   # -> 30/30
 python3 tools/check_links.py             # -> every relative reference resolves
 ```
@@ -84,7 +85,7 @@ Full steps and post-install checks: `INSTALL.md`.
 
 | Thing | How it was checked | Result |
 |---|---|---|
-| `cc-scan.py` v1.0.1 | `tools/tests/run_checks.py` | **60/60 PASS** — 20/20 rules fire on the dirty fixture; clean fixture **0 findings**; baseline, config, `cc-scan:allow`, CLI flags, and a regression test for the escape hatch all behave |
+| `cc-scan.py` v1.0.1 | `tools/tests/run_checks.py` | **61/61 PASS** — 20/20 rules fire on the dirty fixture; clean fixture **0 findings**; baseline, config, `cc-scan:allow`, CLI flags, a regression test for the escape hatch, and the docs guard (an ASCII H1 in every `skills/`+`playbook/` markdown file) all behave |
 | `arch-scan.py` v1.0.0 | `tools/tests/run_arch_checks.py` | **30/30 PASS** — 4 error rules fire on `layers/dirty`, `layers/clean` = **100.0/100 (0 findings)**, Java/Go imports resolved via `rootPackages`, allow-comment scoped per line, drift detection works |
 | ESLint 9.39 + Prettier | `npm run check` in `configs/js` | configs parse · `samples/good-example.ts` = **0 problems** · the 2 deliberate bad samples = 10 problems, right rules |
 | ruff 0.16 + black + mypy | `configs/python/lint.sh` | `orders_good.py` passes all three · `orders_bad.py` = **39 errors** (ANN001 x9, EM101 x3, TRY002 x2, T201 x2, S110, E722, C901, PLR0912/0915/0917, PLR2004, E711…) |
@@ -92,8 +93,8 @@ Full steps and post-install checks: `INSTALL.md`.
 | **import-linter 2.15** | `configs/architecture/demo/python` | `Layers point inward` + `Domain stays framework-free` **BROKEN → KEPT** after deleting one file (exit 1 → exit 0, "Analyzed 13 files, 14 dependencies") |
 | **ArchUnit 1.3.0 (JDK 11)** | `configs/architecture/demo/java` | 3 rules **BROKEN → KEPT** on the same code shape, exit 1 → 0 |
 | pre-commit hooks | `hooks/check-hygiene.sh`, `hooks/check-arch.sh` in a temp git repo | dirty staged file → **exit 1** naming the exact lines; clean → **exit 0** |
-| CI templates | `yaml.safe_load` on all 5 YAML files (`configs/ci/*`, `configs/go/.golangci.yml`) | parse OK; jobs/steps/hooks contain the `arch-scan` + `cc-scan` gates. The commands themselves need a runner — each one is the tested CLI above |
-| Docs cross-references | `python3 tools/check_links.py` | **200 references checked, 0 broken** · the checker itself scores **100.0/100** under `cc-scan` when run from `tools/` (where `clean-code.config.json` skips `DEBUG_STATEMENT`/`MAGIC_NUMBER` for CLI scripts); 95.8 from the pack root, where that config is not loaded — that gap is the config-scoping rule documented in `tools/README.md` §3, not a bug |
+| CI templates | `yaml.safe_load` on all 4 YAML files (`configs/ci/*.yml`, `configs/ci/.pre-commit-config.yaml`, `configs/go/.golangci.yml`) | parse OK; jobs/steps/hooks contain the `arch-scan` + `cc-scan` gates. The commands themselves need a runner — each one is the tested CLI above |
+| Docs cross-references | `python3 tools/check_links.py` | **255 references checked, 0 broken** · the checker itself scores **100.0/100** under `cc-scan` when run from `tools/` (where `clean-code.config.json` skips `DEBUG_STATEMENT`/`MAGIC_NUMBER` for CLI scripts); 95.8 from the pack root, where that config is not loaded — that gap is the config-scoping rule documented in `tools/README.md` §3, not a bug |
 | One standard everywhere | thresholds 120 / 40 / 3 params / complexity 10 repeated in `cc-scan`, ESLint, ruff, Checkstyle, golangci, `.editorconfig` | read by hand + asserted in `run_checks.py` |
 | golangci-lint | **not run** | no Go toolchain in this sandbox; `configs/go/README.md` says so. `demo/*.go` were scanned by `cc-scan`, and `.golangci.yml` (incl. the new `depguard` rules) parses as valid YAML |
 

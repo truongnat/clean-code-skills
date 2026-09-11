@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 1.1.0 — 2026-09-10 · Clean architecture, patterns, and the move to English
+## 1.1.0 — 2026-09-11 · Clean architecture, patterns, and the move to English
 
 ### Added — architecture & patterns (new, written in English)
 - **`tools/arch-scan.py` v1.0.0** — dependency-direction scanner, stdlib only, 6 rules
@@ -54,9 +54,23 @@
   under `skills/` and `playbook/` must have an ASCII H1. It exists because a rename silently restored
   a translated session with its old Vietnamese file during this release; the guard caught two more
   stale files the first time it ran.
-- Still pending: `prompts/00..10` + its README, comments inside `tools/tests/fixtures` and
-  `tools/demo`, `tools/SELF_REVIEW.md`'s older half, and this file's 1.0.0/1.0.1 entries (631 lines
-  total, listed in §*Pending* below). No rule, threshold or command changes in that pending set.
+- **The conversion is complete.** The last pass took `prompts/00..10` + its README, the comments
+  inside `tools/tests/fixtures` and `tools/demo`, `tools/SELF_REVIEW.md`'s older half, the remaining
+  `configs/ci` + `configs/python` + `configs/js` comments, `.gitignore`,
+  `tools/clean-code.config.json`, and this file's 1.0.0/1.0.1 entries. The only Vietnamese left is
+  deliberate: 7 lines in 5 files (see §*Intentional Vietnamese* below).
+- **`prompts/` translated and expanded** — every one of the 14 prompts (00–13, not only the
+  untranslated ones) gained three sections: **Minimum input** (what must be pasted before the answer
+  stops being guesswork), **Output acceptance criteria** (a checklist to run before you start
+  editing code), and **Keeping it from inventing symbols** (a paste-in block forbidding invented
+  identifiers, files, line numbers, tickets and sources, and requiring the model to count its own
+  unsupported claims). `prompts/README.md` documents the shape once. Prompt 01's placeholder title
+  typo (`ĐỊNH DẦN`) and prompt 03's inconsistent `500000` → `500_000_000` example were fixed in the
+  same pass.
+- The 1.0.0/1.0.1 entries were translated **without touching their numbers** — `53/53`, `92
+  references`, `99 references` and `20 rules` are what was true at those releases; the deltas are
+  documented in this entry instead. One truncated sentence was repaired: `COMMENTED_CODE` … `→ si
+  phạm vi` now reads "the scope was narrowed to the comment".
 
 ### Fixed
 - `arch-scan` only recognised `interface/`, so a tree using the hexagonal spelling `interfaces/`
@@ -75,134 +89,168 @@
   `COMMENTED_CODE` by the tool — reworded, dogfood test green again.
 
 ### Notes on measurement
-- Everything quoted below was re-run on the release date; the toolchains used are ruff 0.16.6,
+- Everything quoted below was re-run on 2026-09-11, the release date; the toolchains used are ruff 0.16.6,
   black 26.5.1, mypy 2.3.1, import-linter 2.15, ESLint 10.10.0 + Prettier 3.6.2,
   Checkstyle 10.21.4 on OpenJDK 11, and ArchUnit 1.3.0.
-- `python3 tools/cc-scan.py .` from the pack root scans 32 code files in ~0.15 s (before the fix in
+- `python3 tools/cc-scan.py .` from the pack root scans 75 code files in ~0.21 s (before the fix in
   §"Fixed" of 1.0.1 it crawled `configs/js/node_modules`: 2163 files, 50 s).
 - `python3 tools/arch-scan.py configs/architecture/demo/python` → `82.0/100`, 3 errors; the same
   folder under import-linter → 2 contracts BROKEN. Both tools report the same two edges.
 
-### Pending — English conversion (tracked, no behaviour change)
+### Done — English conversion (closed in this release)
 
-Converted so far: root `README.md`, `INSTALL.md`, `tools/README.md`, `tools/cc-scan.py` (20 rule
-descriptions, every message and hint, CLI help), `tools/check_links.py`, `tools/tests/run_checks.py`
-(60 labels), **all 5 sub-skills** (`clean-code-naming`, `-refactoring`, `-review`,
-`-error-handling`, `-formatting-hooks`) rewritten in English **and expanded**, `references/01–11`
-(all nine chapters plus smells and tests - translated **and** expanded: rule-to-enforcement tables, worked refactors, per-language recipes,
-a value-object cookbook, an error taxonomy, an anti-pattern table with the tool that catches each
-one, and exercises), `configs/js` (ESLint messages
-included), `configs/python`, `configs/java` (Checkstyle messages + README), `configs/ci` (comments and
-CI step names), `configs/go` (README + demo comments).
+Everything is converted: root `README.md`, `INSTALL.md`, `tools/README.md`, `tools/cc-scan.py`
+(20 rule descriptions, every message and hint, CLI help), `tools/arch-scan.py`,
+`tools/check_links.py`, `tools/tests/run_checks.py` (61 labels), `tools/tests/run_arch_checks.py`,
+`tools/SELF_REVIEW.md` (both halves), `tools/demo/` (README + all 4 source files),
+`tools/tests/fixtures/` (comments in both the messy and the clean sets), the router skill and all
+**six** sub-skills, `references/01..14`, `checklists/`, `templates/`, `snippets/`, the whole
+`playbook/` (12 sessions + both appendices), every `configs/*` file (including ESLint/Checkstyle
+message text, the GitHub Actions step names, `sonar-project.properties`, `.editorconfig`,
+`.prettierignore` and the Python `Makefile`), `prompts/00..13` + README, `.gitignore`,
+`tools/clean-code.config.json`, and this CHANGELOG.
 
-Remaining, next passes, in this order (32 files · 631 lines):
+Numbers quoted inside the last batch were re-measured rather than carried over:
 
-| Group | Files | Lines |
+| What | Was written | Re-measured on the release date |
 |---|---|---|
-| prompts (00–10 + README) | 12 | 409 |
-| tools: fixtures, demo comments, SELF_REVIEW | 16 | 139 |
-| CHANGELOG 1.0.0 / 1.0.1 entries | 1 | 78 |
-| intentional Vietnamese examples (glossary, bad code) | 3 | 5 |
+| `tools/tests/run_checks.py` | 60/60 | **61/61** (the docs guard makes 61) |
+| `tools/check_links.py` | 200 references | **255 references, 0 broken** |
+| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 255 references** — the acceptance block was re-run line by line and now matches its own output |
+| `tools/demo` legacy line numbers | 17 / 48 / 55, "5 levels", 1 TODO | **15 / 50 / 56, 7 levels, 2 TODOs** — the score is unchanged at **72.0/100 (4 errors)** |
+| `cc-scan.py` self-review | 32.8/100, error=11 warning=23 info=1 | `tools/` (5 files) **0.0/100, error=18 warning=46 info=2**; `cc-scan.py` alone **35.8/100, error=11 warning=20 info=1**; raw defaults **0.0/100** |
+| `cc-scan.py` accepted-debt counts | MAGIC_NUMBER 41, DEBUG_STATEMENT 20, DEEP_NESTING 15 | across `tools/`: **MAGIC_NUMBER 55, DEBUG_STATEMENT 46, DEEP_NESTING 32, HARD_COMPLEXITY 12, HUGE_FUNCTION 5** |
+| pack-root scan | 32 code files, ~0.15 s | **75 code files, ~0.21 s** (the 1.1.0 architecture fixtures and demos are new files) |
+| CI YAML file count | "all 5 YAML files" in `README.md` | **4** (`configs/ci/*.yml` ×2, `.pre-commit-config.yaml`, `configs/go/.golangci.yml`) — the 1.0.1 entry already said 4; the README row was wrong |
 
-Nothing in the pending set changes a rule, a threshold or a command; it is prose only. Numbers
-quoted inside those files were re-checked and corrected anyway (57/57 → 60/60 checks, Checkstyle
-"7 violations" → 8 audit messages with its severity split, link count 184 → 202).
+`arch-scan` is unchanged by this pass and was re-run to confirm it:
+`configs/architecture/demo/python` → **82.0/100, 3 errors**, `demo/java` → **99.0/100, 0 errors**,
+pack root → **45.0/100, 9 errors** (the deliberately broken `fixtures/layers/dirty`).
+
+### Intentional Vietnamese (7 lines, 5 files — not a gap)
+
+These stay in Vietnamese because they *are* the example:
+
+| File | Line | Why |
+|---|---|---|
+| `skills/clean-code-naming/SKILL.md` | 126–127 | the domain-glossary example: `Đơn hàng = Order` (not `Sale`), `Hoá đơn = Invoice`, `Bên vận chuyển = Carrier` |
+| `playbook/02-naming.md` | 67–68 | the same glossary exercise |
+| `prompts/01-name-finder.md` | 31 | the glossary placeholder shown to the model (`Tạm ứng = Deposit`) |
+| `skills/clean-code-error-handling/SKILL.md` | 30 | the bad example `Error("lỗi")` — a useless message is the point |
+| `prompts/05-error-handling.md` | 12 | the same bad example inside rule 1 |
+
+A translated glossary example would teach the opposite lesson: the glossary exists precisely to map
+the business's own words onto code identifiers.
+
+No rule, threshold or command changed anywhere in this conversion.
 
 ---
 
-## 1.0.1 — 2026-09-10 · Sửa lỗi escape hatch + tự kiểm tài liệu
+## 1.0.1 — 2026-09-10 · Escape-hatch fix + the docs checked against themselves
 
-### Sửa (lỗi thật, tìm thấy khi test tài liệu)
-- **`cc-scan:allow` không áp dụng cho rule cấp dòng.** Tài liệu hứa "đặt comment ở dòng ngay
-  trước vi phạm" nhưng code chỉ làm vậy với rule cấp hàm — nên `// cc-scan:allow MAGIC_NUMBER`
-  ở dòng trên vẫn bị báo. Nay `allow` áp dụng cho **mọi rule**, phạm vi **dòng chứa comment +
-  dòng ngay sau**, không lan toàn hàm (hàm `add()` trong `scan_file`).
-- Xoá `configs/js/prettier.config.mjs` — trùng với `.prettierrc.json`, hai nguồn cấu hình cùng
-  tồn tại là cách nhanh nhất để formatter của mỗi người một khác.
-- `README.md`/`tools/README.md`: bỏ cam kết chưa kiểm chứng (bước CI "đã chạy") — giờ ghi rõ
-  YAML được parse, còn lệnh bên trong chưa execute vì sandbox không có runner.
+### Fixed (real defects, found by testing the documentation)
+- **`cc-scan:allow` did not apply to line-level rules.** The docs promised "put the comment on the
+  line immediately above the violation", but the code only honoured that for function-level rules —
+  so `// cc-scan:allow MAGIC_NUMBER` on the line above was still reported. `allow` now applies to
+  **every rule**, scoped to **the line holding the comment + the line immediately after**, and does
+  not spread across the whole function (the `add()` helper inside `scan_file`).
+- Deleted `configs/js/prettier.config.mjs` — it duplicated `.prettierrc.json`, and two live config
+  sources is the fastest route to everyone's formatter behaving differently.
+- `README.md` / `tools/README.md`: removed an unverified claim (the CI step "was run") — it now says
+  plainly that the YAML parses, while the commands inside it were not executed because the sandbox
+  has no runner.
 
-- **`configs/ci/.pre-commit-config.yaml` không parse được** (YAML `mapping values are not
-  allowed here`, dòng 52): hai hook `bash -c '...'` nhiều dòng nhúng trong plain scalar. Thay
-  bằng **một** hook `hygiene` gọi `hooks/check-hygiene.sh` — script này vốn đã phủ cả ba việc
-  (log debug/.only, conflict marker, `System.out`/`fmt.Print`), giữ logic trong shell là cách
-  duy nhất để local và CI dùng chung một hàng rào.
-- Đường dẫn hook giờ tính từ gốc repo → mọi hướng dẫn cài (`INSTALL.md`, `playbook/05`,
-  skill `clean-code-formatting-hooks`) đều thêm `cp -r configs/ci/hooks .`.
+- **`configs/ci/.pre-commit-config.yaml` would not parse** (YAML `mapping values are not allowed
+  here`, line 52): two multi-line `bash -c '...'` hooks embedded in a plain scalar. Replaced with
+  **one** `hygiene` hook calling `hooks/check-hygiene.sh` — that script already covered all three
+  jobs (debug logs/.only, conflict markers, `System.out`/`fmt.Print`), and keeping the logic in
+  shell is the only way local and CI share one gate.
+- Hook paths are now relative to the repo root → every install guide (`INSTALL.md`, `playbook/05`,
+  the `clean-code-formatting-hooks` skill) gained `cp -r configs/ci/hooks .`.
 
-- **Quét nhiều path thì `ignoreDirs` bị mất hiệu lực.** `load_config()` dò file config trong
-  *mọi* path được truyền, nên `cc-scan skills playbook prompts tools configs` nạp
-  `tools/clean-code.config.json` (chỉ khai báo `ignoreDirs: ["fixtures","demo"]`) và **thay thế**
-  danh sách mặc định → tool bò vào `configs/js/node_modules`, quét 2163 file trong 50 giây thay vì
-  32 file trong 0.14 giây. Hai sửa: (1) `ignoreDirs` giờ được **nối** vào mặc định,
-  (2) `ALWAYS_IGNORE_DIRS` là sàn không config nào gỡ được, (3) config chỉ nạp từ thư mục quét.
-- **`cc-scan … | head` in traceback `BrokenPipeError`.** CLI đúng nghĩa thì phải im lặng như
-  `grep`: khôi phục `SIGPIPE` mặc định ở đầu `main()` (POSIX; Windows bỏ qua).
+- **Scanning several paths silently disabled `ignoreDirs`.** `load_config()` looked for a config
+  file in *every* path passed, so `cc-scan skills playbook prompts tools configs` loaded
+  `tools/clean-code.config.json` (which only declares `ignoreDirs: ["fixtures","demo"]`) and
+  **replaced** the default list → the tool crawled into `configs/js/node_modules`, scanning 2163
+  files in 50 seconds instead of 32 files in 0.14. Three fixes: (1) `ignoreDirs` is now **appended**
+  to the defaults, (2) `ALWAYS_IGNORE_DIRS` is a floor no config can remove, (3) a config is only
+  loaded from a directory being scanned.
+- **`cc-scan … | head` printed a `BrokenPipeError` traceback.** A real CLI stays quiet like `grep`
+  does: the default `SIGPIPE` handler is restored at the top of `main()` (POSIX; ignored on Windows).
 
-### Đã kiểm chứng thêm
-- 4 file YAML trong `configs/ci/` + `configs/go/` parse bằng `yaml.safe_load` → OK.
-- `check-hygiene.sh` chạy thật trong git repo tạm: file bẩn (console.log + `<<<<<<<`) → **exit 1**
-  và in đúng 2 dòng báo lỗi; file sạch → **exit 0**.
-- `cc-scan.py` phiên bản 1.0.1; `tools/check_links.py` → 99 tham chiếu, 0 liên kết hỏng.
+### Additionally verified
+- The 4 YAML files under `configs/ci/` and `configs/go/` parse with `yaml.safe_load` → OK.
+- `check-hygiene.sh` run for real inside a temporary git repo: a dirty file (console.log +
+  `<<<<<<<`) → **exit 1** printing exactly 2 error lines; a clean file → **exit 0**.
+- `cc-scan.py` at version 1.0.1; `tools/check_links.py` → 99 references, 0 broken links.
 
-### Thêm
-- `tools/check_links.py` (viết lại theo guard clause để đạt **100.0/100** khi `cc-scan` soi chính nó): — kiểm **92 tham chiếu tương đối** giữa các tài liệu (link `[..](..)`
-  và đường dẫn trong backtick); exit 1 nếu có liên kết hỏng.
-- `tools/tests/run_checks.py`: 7 test mới — phạm vi `cc-scan:allow` (cùng dòng / dòng liền
-  trước / không lan / chỉ tắt đúng rule) và phạm vi `ignoreDirs` + config (3 test) → **60/60 PASS**.
-- Fixture `suppressed.ts` viết lại hàm `mixed()` để chứng minh cả hai cách đặt comment.
-- `.gitignore` ở gốc pack (node_modules, cache, report; ghi chú rõ baseline *nên* commit).
-- Sửa 3 liên kết hỏng: reference về code smells trong `SKILL.md` (tên cũ `07-code-smells`, nay là `references/10-code-smells-refactorings.md`),
-  tên file playbook trong `templates/adr-template.md` và `configs/java/README.md`.
-- Sửa 7 chỗ lẫn ký tự CJK vào câu tiếng Việt (lỗi gõ nhanh) — giờ có test tự động chặn.
+### Added
+- `tools/check_links.py` (written with guard clauses so it scores **100.0/100** when `cc-scan` reads
+  it): checks **92 relative references** between the documents (both `[..](..)` links and paths in
+  backticks); exits 1 on a broken link.
+- `tools/tests/run_checks.py`: 7 new tests — the scope of `cc-scan:allow` (same line / the line
+  above / no spreading / only the named rule) and the scope of `ignoreDirs` + config (3 tests) →
+  **60/60 PASS**.
+- The `suppressed.ts` fixture's `mixed()` function rewritten to demonstrate both comment placements.
+- A `.gitignore` at the pack root (node_modules, caches, reports; with a note that the baseline
+  *should* be committed).
+- Fixed 3 broken links: the code-smells reference in `SKILL.md` (old name `07-code-smells`, now
+  `references/10-code-smells-refactorings.md`), and the playbook filename in
+  `templates/adr-template.md` and `configs/java/README.md`.
+- Fixed 7 places where a CJK character had slipped into a Vietnamese sentence (fast typing) — there
+  is now an automated test blocking it.
 
-## 1.0.0 — 2026-09-10 · Phát hành đầu tiên
+## 1.0.0 — 2026-09-10 · First release
 
-### Thêm
-- **6 skills** (`skills/`): `clean-code` (chính) + `clean-code-review`, `clean-code-naming`,
+### Added
+- **6 skills** (`skills/`): `clean-code` (the main one) + `clean-code-review`, `clean-code-naming`,
   `clean-code-refactoring`, `clean-code-error-handling`, `clean-code-formatting-hooks`.
- frontmatter `name`/`description` theo chuẩn Agent Skills; skill chính kèm **11 references**,
-  2 checklists, 3 templates, 1 file snippets "Sai → Đúng" (4 ngôn ngữ).
-- **`tools/cc-scan.py` v1.0.0** — máy quét Clean Code, Python stdlib, **20 rule**,
-  hỗ trợ TS/JS/Python/Java/Kotlin/Scala/C/C++/C#/Go/Rust/PHP/Swift/Ruby;
-  output text/JSON, exit code cho CI, baseline, `cc-scan:allow`, config file.
-- **`tools/tests/run_checks.py`** — 53 kiểm tra chạy thật trên fixture
-  (`messy/` 7 file, `clean/` 5 file), phủ: độ phủ rule, chống false positive, định vị
-  dòng, baseline, config, cơ chế ngoại lệ, CLI, dogfood.
-- **`tools/demo/`** — cùng một nghiệp vụ ở 2 phiên bản: `legacy-*` (72/100, 4 error)
-  vs `order-service.ts` + test (100/100, 0 finding) + README phân tích từng vi phạm.
+  `name`/`description` frontmatter per the Agent Skills standard; the main skill ships **11
+  references**, 2 checklists, 3 templates and 1 "Wrong → Right" snippets file (4 languages).
+- **`tools/cc-scan.py` v1.0.0** — a Clean Code scanner, Python stdlib only, **20 rules**, covering
+  TS/JS/Python/Java/Kotlin/Scala/C/C++/C#/Go/Rust/PHP/Swift/Ruby; text and JSON output, an exit code
+  for CI, a baseline, `cc-scan:allow`, and a config file.
+- **`tools/tests/run_checks.py`** — 53 checks run for real against fixtures (`messy/` 7 files,
+  `clean/` 5 files), covering: rule coverage, false-positive resistance, line location, the
+  baseline, the config, the exception mechanism, the CLI, and dogfooding.
+- **`tools/demo/`** — the same business feature in 2 versions: `legacy-*` (72/100, 4 errors) vs
+  `order-service.ts` + its tests (100/100, 0 findings) + a README analysing each violation.
 - **`configs/`** — ESLint 9 flat config + Prettier + tsconfig (JS/TS); ruff/black/mypy
-  `pyproject.toml` + `lint.sh` + `Makefile` (Python); Checkstyle `checkstyle.xml` +
-  maven/gradle snippet (Java); `.golangci.yml` (Go); GitHub Actions + GitLab CI +
-  pre-commit + lint-staged + `.editorconfig` + Sonar quality gate (CI).
-- **`playbook/`** — giáo trình 9 buổi bám đúng cây chuẩn (ý nghĩa → naming → hàm → comment
-  → format → đối tượng/dữ liệu → ngoại lệ → SOLID-DRY-KISS-YAGNI → code health & quy trình)
-  + phụ lục A (30 câu kiểm tra onboarding, có đáp án) + phụ lục B (maturity model 5 cấp,
-  rubric 100 điểm cho module, kế hoạch 90 ngày).
-- **`prompts/`** — 10 prompt pack (reviewer, name finder, extract function, magic numbers,
-  SOLID audit, error handling, comment cleaner, testability, legacy plan, junior mentor,
-  PR description) kèm cách kiểm chứng output.
-- **`tools/SELF_REVIEW.md`** — tự soi tool bằng chính tool: 4 nhóm nợ được khai báo
-  có lý do + danh sách nợ còn lại (AST, duplicate fuzzy, diff-aware).
+  `pyproject.toml` + `lint.sh` + `Makefile` (Python); Checkstyle `checkstyle.xml` + maven/gradle
+  snippets (Java); `.golangci.yml` (Go); GitHub Actions + GitLab CI + pre-commit + lint-staged +
+  `.editorconfig` + a Sonar quality gate (CI).
+- **`playbook/`** — a 9-session curriculum following the standard's own tree (why clean code →
+  naming → functions → comments → formatting → objects/data → errors → SOLID-DRY-KISS-YAGNI → code
+  health & workflow) + appendix A (30 onboarding questions with answers) + appendix B (a 5-level
+  maturity model, a 100-point rubric for a module, a 90-day plan).
+- **`prompts/`** — a pack of 10 prompts (reviewer, name finder, extract function, magic numbers,
+  SOLID audit, error handling, comment cleaner, testability, legacy plan, junior mentor, PR
+  description) each with a way to verify the output.
+- **`tools/SELF_REVIEW.md`** — the tool read by itself: 4 groups of declared debt with their reasons
+  + the list of debt still open (AST, fuzzy duplicates, diff-aware scanning).
 
-### Đã kiểm chứng trong lần phát hành này
+### Verified in this release
 - `tools/tests/run_checks.py` → **53/53 PASS**.
-- ESLint 9.39.5 + typescript-eslint 8 + Prettier 3 trên `configs/js` → good sample 0 problem,
-  bad samples 10 problem; `prettier --check .` sạch.
-- ruff 0.16.6 + black 26.5.1 + mypy 2.3.1 trên `configs/python` → `orders_good.py` sạch,
-  `orders_bad.py` 39 lỗi; `lint.sh` chạy end-to-end (exit 0/1 đúng).
-- Checkstyle 10.21.4 trên `configs/java` → config chạy được; bad 8 violation, good 0.
-  (Đã phải bỏ `AvoidCatchingThrowable` — module không tồn tại ở 10.x.)
-- YAML của `configs/ci/*.yml` parse hợp lệ.
-- `golangci-lint` **chưa** chạy: sandbox không có Go toolchain (ghi rõ ở `configs/go/README.md`).
+- ESLint 9.39.5 + typescript-eslint 8 + Prettier 3 on `configs/js` → the good sample 0 problems,
+  the bad samples 10 problems; `prettier --check .` clean.
+- ruff 0.16.6 + black 26.5.1 + mypy 2.3.1 on `configs/python` → `orders_good.py` clean,
+  `orders_bad.py` 39 errors; `lint.sh` runs end to end (exit 0/1 correct).
+- Checkstyle 10.21.4 on `configs/java` → the config runs; bad 8 violations, good 0.
+  (`AvoidCatchingThrowable` had to be dropped — the module does not exist in 10.x.)
+- The YAML in `configs/ci/*.yml` parses.
+- `golangci-lint` **not** run: no Go toolchain in the sandbox (stated in `configs/go/README.md`).
 
-### Sửa trong quá trình xây dựng (rút kinh nghiệm, đã phản ánh vào tài liệu)
-- `COMMENTED_CODE` ban đầu báo oan 279 dòng (xét cả dòng code thay vì chỉ phần comment) → si phạm vi.
-- `EMPTY_CATCH` ban đầu coi `except X: print(e)` là nuốt lỗi và bỏ qua thụt lề (dùng
-  chuỗi đã strip) → sửa `indent_of()`, `filler` chỉ còn `pass/.../noop`.
-- `MAGIC_NUMBER` ban đầu báo cả `const VAT_RATE = 0.1` / `{"maxLine": 120}` → tha cho
-  khai báo hằng số (UPPER_SNAKE, `static final`, Go `var/const`, dict key).
-- `NEGATIVE_CONDITIONAL` ban đầu báo cả guard clause `if (!a || b.length < MIN)` → chỉ bắt
-  **phủ định kép**.
-- `DUPLICATE_BLOCK` báo 3 lần cho cùng một khối (sliding window) → gộp window chồng lấn.
-- `BLOCK_COMMENT` bắt nhầm regex chứa `/*` trong chuỗi → chỉ tính dòng bắt đầu bằng `/*`.
+### Fixed while building it (lessons learned, now reflected in the docs)
+- `COMMENTED_CODE` initially reported 279 lines falsely (it examined the code line, not just the
+  comment part) → the scope was narrowed to the comment.
+- `EMPTY_CATCH` initially treated `except X: print(e)` as swallowing the error, and ignored
+  indentation (it used the stripped string) → `indent_of()` fixed, and `filler` reduced to
+  `pass`/`...`/`noop`.
+- `MAGIC_NUMBER` initially reported `const VAT_RATE = 0.1` and `{"maxLine": 120}` → constant
+  declarations are now spared (UPPER_SNAKE, `static final`, Go `var/const`, dict keys).
+- `NEGATIVE_CONDITIONAL` initially reported the guard clause `if (!a || b.length < MIN)` → it now
+  only catches **double negation**.
+- `DUPLICATE_BLOCK` reported the same block 3 times (sliding window) → overlapping windows are
+  merged.
+- `BLOCK_COMMENT` misfired on a regex containing `/*` inside a string → only lines starting with
+  `/*` count.

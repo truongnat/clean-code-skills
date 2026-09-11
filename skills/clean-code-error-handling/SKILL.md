@@ -14,6 +14,10 @@ metadata:
 
 # Error handling, clean-code style
 
+> **Scanner path:** commands below assume `tools/cc-scan.py` / `tools/arch-scan.py` are in the
+> repo. If they are not, the same scanners may be on `PATH` as `cc-scan` / `arch-scan` (identical
+> flags) — see `INSTALL.md` §1b. If neither exists, ask for the report instead of guessing numbers.
+
 ## 1. The 30-second decision: Result or exception?
 
 ```text

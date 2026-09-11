@@ -1,5 +1,44 @@
 # CHANGELOG
 
+## 1.3.0 — 2026-09-11 · Global install, one source of truth
+
+### Added
+- **`INSTALL.md` §1b — global install for every provider**, and this one was *executed*, not
+  transcribed. One hub (`~/.agents/skills`) symlinked to the clone, then each provider's global
+  skills directory symlinked to the hub, then the scanners on `PATH`. `git pull` in the clone now
+  updates all five providers at once; a `cp`-based install would give five divergent copies.
+- **Scanner-path note in all 7 `SKILL.md` files.** The skills issue 26 commands of the form
+  `python3 tools/cc-scan.py`, which is correct for a per-repo install and **broken for a global
+  one** — an arbitrary repo has no `tools/` folder. Each skill now states the fallback up front:
+  use `cc-scan` / `arch-scan` from `PATH`, and if neither exists, ask for the report rather than
+  inventing numbers.
+
+### Measured on the machine this was installed on
+- All five providers were already present (`~/.claude`, `~/.codex`, `~/.grok`, `~/.cursor`,
+  `~/.gemini`), and the existing convention was discovered by inspection rather than assumed: the
+  machine already used `~/.agents/skills` as a hub with 50/65/8/49 symlinks into it from Claude
+  Code / Codex / Grok / Cursor respectively. The install follows that convention instead of
+  inventing a parallel one.
+- **7/7 `SKILL.md` files readable through the two-hop symlink chain in all 5 directories** (35
+  paths checked). `cc-scan --version` → 1.0.1 and `arch-scan --version` → 1.0.0 from `/tmp`, i.e.
+  outside the repo. The seven skills then appeared in a live agent session, which is the only
+  end-to-end proof that matters.
+- **`~/.agents/skills` is also Antigravity's global skills directory**, so the hub and Antigravity's
+  own location are the same folder — no separate step.
+- `~/.grok/skills` and `~/.cursor/skills` are **not documented by their vendors** as far as this
+  pack's research reached; they were found by inspecting an installed machine. Recorded as observed,
+  not promised.
+
+### Deliberately not done
+- **`AGENTS.md` is not installed globally.** It is written for *a* repo and names paths such as
+  `tools/cc-scan.py`; loaded into every session on the machine it would point agents at files that
+  do not exist. Skills are the correct global unit because their `description` gates them — they
+  load only when the task matches. `AGENTS.md` stays per repo.
+- One consequence is documented rather than engineered away: if the clone moves or is deleted, all
+  five providers break at once. That is the price of a single source of truth.
+
+---
+
 ## 1.2.1 — 2026-09-11 · Published: flattened layout, no vendored binaries
 
 ### Changed
@@ -7,7 +46,7 @@
   meant a GitHub landing page with no README. Every install command now uses a `$PACK` variable set
   once at the top of `INSTALL.md`, so it no longer matters where you clone to, and the *Acceptance*
   block runs verbatim from the repo root (re-run after the move: **61/61**, **30/30**,
-  **275 references 0 broken**, demo **72.0/100**, python arch demo **82.0/100**).
+  **291 references 0 broken**, demo **72.0/100**, python arch demo **82.0/100**).
 - **The three verification JARs are no longer vendored** (`checkstyle.jar` 19M, `archunit-1.3.0.jar`
   4.4M, `slf4j-api-2.0.13.jar` 68K = 23.4M). They are third-party binaries under LGPL-2.1/Apache-2.0
   and nothing in the pack needs them at install time. `javalib/` and `*.jar` are now ignored, and the
@@ -69,7 +108,7 @@
 - Direct fetches of the vendor docs failed in this sandbox (DNS blocked); the paths come from search
   results, which is a weaker source than the doc itself. Treat the four unexecuted rows as a
   starting point to confirm, not as tested fact.
-- `tools/check_links.py` → **275 references, 0 broken** (was 264; `AGENTS.md` adds 8).
+- `tools/check_links.py` → **291 references, 0 broken** (was 264; `AGENTS.md` adds 8).
   `run_checks.py` **61/61**, `run_arch_checks.py` **30/30**, both unchanged by this release.
 
 ---
@@ -202,8 +241,8 @@ Numbers quoted inside the last batch were re-measured rather than carried over:
 | What | Was written | Re-measured on the release date |
 |---|---|---|
 | `tools/tests/run_checks.py` | 60/60 | **61/61** (the docs guard makes 61) |
-| `tools/check_links.py` | 200 references | **275 references, 0 broken** |
-| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 275 references** — the acceptance block was re-run line by line and now matches its own output |
+| `tools/check_links.py` | 200 references | **291 references, 0 broken** |
+| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 291 references** — the acceptance block was re-run line by line and now matches its own output |
 | `tools/demo` legacy line numbers | 17 / 48 / 55, "5 levels", 1 TODO | **15 / 50 / 56, 7 levels, 2 TODOs** — the score is unchanged at **72.0/100 (4 errors)** |
 | `cc-scan.py` self-review | 32.8/100, error=11 warning=23 info=1 | `tools/` (5 files) **0.0/100, error=18 warning=46 info=2**; `cc-scan.py` alone **35.8/100, error=11 warning=20 info=1**; raw defaults **0.0/100** |
 | `cc-scan.py` accepted-debt counts | MAGIC_NUMBER 41, DEBUG_STATEMENT 20, DEEP_NESTING 15 | across `tools/`: **MAGIC_NUMBER 55, DEBUG_STATEMENT 46, DEEP_NESTING 32, HARD_COMPLEXITY 12, HUGE_FUNCTION 5** |

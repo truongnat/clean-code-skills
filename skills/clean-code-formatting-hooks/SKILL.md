@@ -14,6 +14,10 @@ metadata:
 
 # Formatting, hooks & CI — make the standard the default
 
+> **Scanner path:** commands below assume `tools/cc-scan.py` / `tools/arch-scan.py` are in the
+> repo. If they are not, the same scanners may be on `PATH` as `cc-scan` / `arch-scan` (identical
+> flags) — see `INSTALL.md` §1b. If neither exists, ask for the report instead of guessing numbers.
+
 A rule nobody enforces is a suggestion. This skill is about moving decisions out of code
 review and into tooling, so review time goes to design instead of commas.
 

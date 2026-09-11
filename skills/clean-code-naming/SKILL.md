@@ -14,6 +14,10 @@ metadata:
 
 # Naming & magic-value refactoring
 
+> **Scanner path:** commands below assume `tools/cc-scan.py` / `tools/arch-scan.py` are in the
+> repo. If they are not, the same scanners may be on `PATH` as `cc-scan` / `arch-scan` (identical
+> flags) — see `INSTALL.md` §1b. If neither exists, ask for the report instead of guessing numbers.
+
 Renaming is the **riskiest** refactoring for a junior (public API breaks) and the
 **highest-yield per minute** of any of them (no behaviour can change). This skill is the safe
 procedure plus the vocabulary.

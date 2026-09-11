@@ -16,6 +16,10 @@ metadata:
 
 # Clean architecture — sub-skill
 
+> **Scanner path:** commands below assume `tools/cc-scan.py` / `tools/arch-scan.py` are in the
+> repo. If they are not, the same scanners may be on `PATH` as `cc-scan` / `arch-scan` (identical
+> flags) — see `INSTALL.md` §1b. If neither exists, ask for the report instead of guessing numbers.
+
 Parent skill: `../clean-code/SKILL.md`. Deep material: `../clean-code/references/12-clean-architecture.md`,
 `13-architecture-patterns.md`, `14-design-patterns.md`. Tooling: `tools/arch-scan.py` +
 `configs/architecture/`.

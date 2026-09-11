@@ -14,6 +14,10 @@ metadata:
 
 # Clean Code Review
 
+> **Scanner path:** commands below assume `tools/cc-scan.py` / `tools/arch-scan.py` are in the
+> repo. If they are not, the same scanners may be on `PATH` as `cc-scan` / `arch-scan` (identical
+> flags) — see `INSTALL.md` §1b. If neither exists, ask for the report instead of guessing numbers.
+
 Sibling of `clean-code`. The goal: **find the 3 things worth fixing in 30 minutes**,
 not write 300 comments about style. A review that cannot be prioritised is noise that
 the author will negotiate away one line at a time.

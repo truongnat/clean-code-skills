@@ -76,6 +76,63 @@ Frontmatter needs `name` + `description` (already there). `description` is what 
 refactor, code review, naming, error handling, magic number, architecture, layers, dependency rule,
 quality gate*.
 
+## 1b. Or install once, globally, for every provider
+
+If you want the standard available in **every** repo without copying it into each one, use one
+source of truth and symlink it. This is the recipe that was **executed on a real machine** with all
+five providers installed — the skill folders resolve through a two-hop chain and every provider
+picked them up:
+
+```bash
+REPO=/path/to/clean-code-skills          # the clone
+HUB=$HOME/.agents/skills                 # single source of truth
+SKILLS=(clean-code clean-architecture clean-code-review clean-code-naming \
+        clean-code-refactoring clean-code-error-handling clean-code-formatting-hooks)
+
+mkdir -p "$HUB"
+for s in "${SKILLS[@]}"; do ln -sfn "$REPO/skills/$s" "$HUB/$s"; done
+
+# every provider that reads a global skills dir points at the hub
+for d in "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills"; do
+  mkdir -p "$d"
+  for s in "${SKILLS[@]}"; do ln -sfn "$HUB/$s" "$d/$s"; done
+done
+
+# the scanners on PATH, so a skill works in a repo that has no tools/ folder
+ln -sfn "$REPO/tools/cc-scan.py"   "$HOME/.local/bin/cc-scan"
+ln -sfn "$REPO/tools/arch-scan.py" "$HOME/.local/bin/arch-scan"
+chmod +x "$REPO/tools/cc-scan.py" "$REPO/tools/arch-scan.py"
+```
+
+Why symlinks and not `cp`: `git pull` in the clone then updates all five providers at once. A copy
+gives you five divergent versions and no way to tell which repo is on which.
+
+Verify (adjust the provider you use):
+
+```bash
+for d in ~/.claude/skills ~/.codex/skills ~/.grok/skills ~/.cursor/skills ~/.agents/skills; do
+  printf '%-24s ' "$d"; /bin/ls -A "$d" | grep -c '^clean'          # -> 7 each
+done
+cc-scan --version && arch-scan --version                             # -> 1.0.1 / 1.0.0
+cd /tmp && cc-scan . --no-baseline | sed -n 2p                       # works outside the repo
+```
+
+Then ask your agent *"list the skills you have"* — the seven `clean-*` entries must appear.
+
+Notes that cost something to learn:
+
+- **Antigravity's global skills directory is `~/.agents/skills`**, which is why the hub lives there:
+  one directory serves as both the hub and Antigravity's own global location.
+- **Do not install `AGENTS.md` globally.** It is written for *a* repo and names paths like
+  `tools/cc-scan.py`; loaded into every session on the machine it would point agents at files that
+  do not exist. Skills are the right global unit precisely because their `description` gates them —
+  they load only when the task matches. Keep `AGENTS.md` per repo.
+- If the clone moves or is deleted, all five providers break at once. That is the cost of one source
+  of truth; keep the clone somewhere permanent, not in a scratch folder.
+- `~/.grok/skills` and `~/.cursor/skills` are undocumented by their vendors as far as this pack's
+  research went — they were found by inspecting a machine where both are installed. Treat them as
+  observed, not promised.
+
 ## 2. Put the scanners in your repo (the skills reference these paths)
 
 ```bash
@@ -133,7 +190,7 @@ import line and give the ticket a deadline.
 ```bash
 python3 tools/tests/run_checks.py | tail -1      # → 61/61 checks passed
 python3 tools/tests/run_arch_checks.py | tail -1 # → 30/30 arch checks passed
-python3 tools/check_links.py | tail -1           # → 275 references, 0 broken links
+python3 tools/check_links.py | tail -1           # → 291 references, 0 broken links
 python3 tools/cc-scan.py tools/demo/src/legacy-order-service.ts \
         tools/demo/src/legacy-renderer.ts --no-baseline | sed -n 2p
                                                                     # → 72.0/100 (grade C)
@@ -150,8 +207,12 @@ A `git clone` of this repo keeps the bit; a copied folder may not.
 ## Uninstall
 
 ```bash
-rm -rf ~/.claude/skills/clean-* .claude/skills/clean-* .agents/skills/clean-* \
-       ~/.codex/skills/clean-* .cursor/rules/clean-code.mdc
+# per repo
+rm -rf .claude/skills/clean-* .agents/skills/clean-* .cursor/rules/clean-code.mdc
+# global (symlinks only - the clone itself is untouched)
+rm -f ~/.claude/skills/clean-* ~/.codex/skills/clean-* ~/.grok/skills/clean-* \
+      ~/.cursor/skills/clean-* ~/.agents/skills/clean-* \
+      ~/.local/bin/cc-scan ~/.local/bin/arch-scan
 rm -f AGENTS.md tools/cc-scan.py tools/arch-scan.py .clean-code-baseline.json arch-scan.config.json
 ```
 

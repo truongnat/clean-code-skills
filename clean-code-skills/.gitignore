@@ -13,3 +13,8 @@ cc-report.json
 clean-code-report.json
 # The baseline IS meant to be committed (it freezes old debt and blocks new) - do not ignore it:
 # .clean-code-baseline.json
+
+# AGENTS.md is a deliverable of this pack, not a local artifact. Many people carry
+# `AGENTS.md` in a GLOBAL gitignore; a repo rule outranks it, so this negation keeps
+# the file committable here. (It cost one silently-empty commit to find out.)
+!AGENTS.md

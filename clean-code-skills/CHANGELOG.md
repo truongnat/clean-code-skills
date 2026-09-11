@@ -1,5 +1,48 @@
 # CHANGELOG
 
+## 1.2.0 — 2026-09-11 · Five providers, one standard
+
+### Added
+- **`AGENTS.md` at the pack root** — one portable page of standing instructions (the rules in cost
+  order, the hard constraints on agent output, the definition of done). Codex, Cursor, Grok and
+  Antigravity all read `AGENTS.md`; Claude Code reads `CLAUDE.md` and is pointed at it with one
+  line. It is deliberately short, because it is loaded into every session.
+- **`INSTALL.md` §1 rewritten as a provider matrix** covering **Claude Code · Codex (ChatGPT) ·
+  Cursor · Grok (xAI) · Antigravity (Google)**: the standing-instructions file, the skills path, the
+  command that verifies the install, and a **Status** column saying which row was executed here.
+  The lazy win documented explicitly: Claude Code, Grok and Antigravity consume the *same*
+  `SKILL.md` format, so one folder shape serves three providers (Grok reads `.claude/` directly;
+  Antigravity uses `.agents/skills/`, legacy `.agent/skills/`).
+
+### Fixed
+- **The Cursor install was a silent no-op.** `INSTALL.md` said
+  `cp skills/clean-code/SKILL.md .cursor/rules/clean-code.mdc`, but Cursor keys off
+  `description` / `globs` / `alwaysApply` frontmatter, which a `SKILL.md` does not carry — the rule
+  could never activate, and the user would conclude the pack was broken. Replaced with a generator
+  that writes the `.mdc` frontmatter and strips `SKILL.md`'s own frontmatter block
+  (`awk 'n>=2; /^---$/ && n<2 {n++}'`) instead of `tail -n +2`, which left `name:`/`description:`
+  loose in the body. **Run here**: the generated file is 201 lines with exactly one frontmatter
+  block and no leaked key.
+- `README.md`'s tree and install block said "Claude Code / Cursor / Codex"; both now name all five
+  and point at `AGENTS.md`.
+- The `Uninstall` section left residue: it now also removes `AGENTS.md`, `.agents/skills/clean-*`
+  and `~/.codex/skills/clean-*`.
+
+### Notes on measurement
+- Only the **Claude Code** row was executed (7 skills discovered under `.claude/skills/`), plus the
+  Cursor `.mdc` generator. The Codex, Grok and Antigravity paths are transcribed from vendor
+  documentation and are marked **not run** in both `README.md` and `INSTALL.md` §1 — the same rule
+  the `golangci-lint` row has followed since 1.0.0. Provider paths move between versions, so every
+  row carries a Verify command (`/skills`, `codex --print-instructions`, `grok inspect`) and that
+  command outranks the table.
+- Direct fetches of the vendor docs failed in this sandbox (DNS blocked); the paths come from search
+  results, which is a weaker source than the doc itself. Treat the four unexecuted rows as a
+  starting point to confirm, not as tested fact.
+- `tools/check_links.py` → **273 references, 0 broken** (was 264; `AGENTS.md` adds 8).
+  `run_checks.py` **61/61**, `run_arch_checks.py` **30/30**, both unchanged by this release.
+
+---
+
 ## 1.1.0 — 2026-09-11 · Clean architecture, patterns, and the move to English
 
 ### Added — architecture & patterns (new, written in English)
@@ -128,8 +171,8 @@ Numbers quoted inside the last batch were re-measured rather than carried over:
 | What | Was written | Re-measured on the release date |
 |---|---|---|
 | `tools/tests/run_checks.py` | 60/60 | **61/61** (the docs guard makes 61) |
-| `tools/check_links.py` | 200 references | **264 references, 0 broken** |
-| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 264 references** — the acceptance block was re-run line by line and now matches its own output |
+| `tools/check_links.py` | 200 references | **273 references, 0 broken** |
+| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 273 references** — the acceptance block was re-run line by line and now matches its own output |
 | `tools/demo` legacy line numbers | 17 / 48 / 55, "5 levels", 1 TODO | **15 / 50 / 56, 7 levels, 2 TODOs** — the score is unchanged at **72.0/100 (4 errors)** |
 | `cc-scan.py` self-review | 32.8/100, error=11 warning=23 info=1 | `tools/` (5 files) **0.0/100, error=18 warning=46 info=2**; `cc-scan.py` alone **35.8/100, error=11 warning=20 info=1**; raw defaults **0.0/100** |
 | `cc-scan.py` accepted-debt counts | MAGIC_NUMBER 41, DEBUG_STATEMENT 20, DEEP_NESTING 15 | across `tools/`: **MAGIC_NUMBER 55, DEBUG_STATEMENT 46, DEEP_NESTING 32, HARD_COMPLEXITY 12, HUGE_FUNCTION 5** |

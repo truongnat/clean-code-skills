@@ -1,0 +1,19 @@
+{
+  "name": "clean-code-configs-js",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ESLint/Prettier config packaged with the clean-code skill. Copy it into your repo, then npm i.",
+  "scripts": {
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "fmt": "prettier --check .",
+    "fmt:write": "prettier --write .",
+    "check": "npm run fmt && npm run lint"
+  },
+  "devDependencies": {
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "typescript-eslint": "^8.20.0"
+  }
+}

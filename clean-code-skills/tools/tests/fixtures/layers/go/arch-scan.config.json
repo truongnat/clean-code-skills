@@ -1,0 +1,12 @@
+{
+  "rootPackages": [
+    "github.com/acme/shop"
+  ],
+  "frameworkPackages": {
+    "domain": [
+      "database/sql",
+      "gorm.io"
+    ]
+  },
+  "boundaries": []
+}

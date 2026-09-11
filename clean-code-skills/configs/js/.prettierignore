@@ -1,0 +1,6 @@
+# Sample files DELIBERATELY misformatted to demo the rules; do not format them.
+samples/bad-example.ts
+samples/bad-structure.ts
+node_modules
+dist
+coverage

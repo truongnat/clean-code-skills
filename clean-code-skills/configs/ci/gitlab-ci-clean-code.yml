@@ -1,0 +1,67 @@
+# GitLab CI — Clean Code
+# Copy into .gitlab-ci.yml (or include: this file). Needs a runner with python3.
+stages: [lint]
+
+variables:
+  CC_FAIL_ON: "error"        # ratchet later: error -> warning
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+clean-code:
+  stage: lint
+  image: python:3.12-slim
+  cache:
+    key: cc-$CI_DEFAULT_BRANCH
+    paths: [.cache/pip]
+  before_script:
+    - pip install --quiet ruff black mypy   # plus npm ci when the repo has JS
+  script:
+    # 1) structural scan with the skill's script
+    - python3 tools/cc-scan.py . --fail-on "$CC_FAIL_ON" --json -o clean-code-report.json
+    # 2) language-specific format and lint
+    - ruff check . --output-format=gitlab > ruff-gl.json || true
+    - ruff format --check .
+    # - npx prettier --check "**/*.{ts,tsx,js,json,md}"
+    # - npx eslint . --max-warnings=0
+  artifacts:
+    when: always
+    paths: [clean-code-report.json]
+    reports:
+      codequality: ruff-gl.json     # GitLab renders a code-quality diff on the MR
+
+# Nightly: whole repo, no baseline - detects the debt growing
+clean-code-full:
+  stage: lint
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - python3 tools/cc-scan.py . --no-baseline --fail-on warning --json -o cc-full.json
+  allow_failure: true
+
+# ── ONBOARDING LEGACY CODE ───────────────────────────────────────────────────
+# 1. First commit: python3 tools/cc-scan.py . --update-baseline  -> freeze today's state
+#    (.clean-code-baseline.json is committed; from then CI blocks NEW findings only)
+# 2. Each sprint: shrink the baseline by deleting rule groups from it and fixing the code
+# 3. When the baseline is empty: drop --use-baseline, move CC_FAIL_ON to "warning"
+
+arch-scan:
+  stage: lint
+  image: python:3.12-slim
+  variables:
+    CC_ARCH_FAIL_ON: "error"
+  script:
+    - |
+      if [ ! -f arch-scan.config.json ]; then
+        echo "No arch-scan.config.json -> skipping the architecture gate."
+        echo "Enable with: cp configs/architecture/arch-scan.config.json ."
+        exit 0
+      fi
+    - SRC=src; [ -d src ] || SRC=.
+    - python3 tools/arch-scan.py "$SRC" --fail-on "$CC_ARCH_FAIL_ON" --json -o arch-report.json
+    - python3 -c "import json;d=json.load(open('arch-report.json'));print('arch-scan',d['score'],d['grade'],d['counts'])"
+  artifacts:
+    when: always
+    paths:
+      - arch-report.json
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

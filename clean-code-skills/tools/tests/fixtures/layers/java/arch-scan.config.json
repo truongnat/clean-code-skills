@@ -1,0 +1,12 @@
+{
+  "rootPackages": [
+    "com.example"
+  ],
+  "frameworkPackages": {
+    "domain": [
+      "org.springframework",
+      "javax.persistence"
+    ]
+  },
+  "boundaries": []
+}

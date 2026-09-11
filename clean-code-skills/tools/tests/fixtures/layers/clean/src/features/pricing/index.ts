@@ -1,0 +1,1 @@
+export { priceIt } from './internal';

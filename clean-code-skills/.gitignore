@@ -1,0 +1,15 @@
+# Do not commit any of this
+node_modules/
+.venv*/
+__pycache__/
+*.pyc
+.ruff_cache/
+.mypy_cache/
+coverage/
+dist/
+build/
+artifacts/
+cc-report.json
+clean-code-report.json
+# The baseline IS meant to be committed (it freezes old debt and blocks new) - do not ignore it:
+# .clean-code-baseline.json

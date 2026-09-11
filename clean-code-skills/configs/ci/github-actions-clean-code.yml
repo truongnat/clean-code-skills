@@ -1,0 +1,202 @@
+# ============================================================================
+# CI Clean Code — GitHub Actions
+# Copy to .github/workflows/clean-code.yml
+#
+# Principle: the machine owns layout and the numeric thresholds; people own design.
+# An unformatted PR goes red, but nobody rewrites code to suit a reviewer's taste.
+#
+# Incremental mode: only-changed-files=true scans just the touched files (default);
+# set false for the nightly whole-repo sweep.
+# ============================================================================
+name: clean-code
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: "0 3 * * *"   # nightly: whole repo + trend measurement
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write      # lets the bot comment on the PR
+
+env:
+  CC_FAIL_ON: error          # start by blocking errors; ratchet toward "warning"
+  CC_ONLY_CHANGED: "true"    # PRs scan changed files only; the nightly sets it to false
+
+jobs:
+  # ── 0. Steps shared with other jobs: merge the reports into one PR comment ──
+  clean-code:
+    name: Clean Code (cc-scan + linters)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # history is needed to diff against the base branch
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: List files changed against the base
+        id: changed
+        run: |
+          BASE="${{ github.event.pull_request.base.ref || 'main' }}"
+          git fetch origin "$BASE" --depth=200 || true
+          CHANGED=$(git diff --name-only --diff-filter=ACMR "origin/$BASE"...HEAD \
+                    | grep -E '\.(ts|tsx|js|jsx|py|java|kt|go|cs|rs)$' || true)
+          {
+            echo "files<<EOF"
+            echo "$CHANGED"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Scanning $(echo "$CHANGED" | grep -c . || echo 0) changed files"
+
+      # 0b. Architecture gate: who may import whom (references/12-clean-architecture.md)
+      - name: Architecture scan (arch-scan)
+        run: |
+          if [ ! -f arch-scan.config.json ]; then
+            echo "No arch-scan.config.json -> architecture gate skipped."
+            echo "Enable it: cp configs/architecture/arch-scan.config.json .   (then edit layer globs)"
+            exit 0
+          fi
+          SRC=src; [ -d src ] || SRC=.
+          python3 tools/arch-scan.py "$SRC" --fail-on "$CC_ARCH_FAIL_ON" --json -o arch-report.json \
+            || { python3 -c "import json;d=json.load(open('arch-report.json'));[print(f['rule'],f['file'],f['message']) for f in d['findings'][:12]]"; exit 1; }
+          python3 -c "import json;d=json.load(open('arch-report.json'));print('arch-scan:',d['score'],d['grade'],'edges',d['edges'])"
+
+      - name: Cache cc-scan tool
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: cc-scan-${{ runner.os }}
+
+      # ── 1. Quantitative clean-code scan (the script shipped with the skill) ────
+      - name: Clean Code scan (incremental)
+        env:
+          FILES: ${{ steps.changed.outputs.files }}
+        run: |
+          python3 - <<'PY'
+          import os, subprocess, sys
+          scan = os.environ.get("CC_SCAN", ".claude/skills/clean-code/tools/cc-scan.py")
+          if not os.path.exists(scan):
+              scan = "tools/cc-scan.py"          # point this at your copy if it lives elsewhere
+          only_changed = os.environ.get("CC_ONLY_CHANGED", "true") == "true" and os.environ.get("GITHUB_EVENT_NAME") != "schedule"
+          files = [f for f in (os.environ.get("FILES") or "").split("\n") if f.strip() and os.path.exists(f)]
+          target = files if (only_changed and files) else ["."]
+          cmd = [sys.executable, scan, *target, "--fail-on", os.environ.get("CC_FAIL_ON", "error"), "--json", "-o", "clean-code-report.json"]
+          print("→", " ".join(cmd[:6]), f"({len(target)} target)")
+          raise SystemExit(subprocess.call(cmd))
+          PY
+
+      # ── 2. Formatter + linter per language (enable only what your repo uses) ───
+      - name: Prettier + ESLint (JS/TS)
+        if: ${{ hashFiles('package.json') != '' }}
+        run: |
+          npm ci --no-audit --no-fund
+          npx prettier --check "**/*.{ts,tsx,js,jsx,json,md,yml}"
+          npx eslint . --max-warnings=0 --format github
+
+      - name: ruff + black + mypy (Python)
+        if: ${{ hashFiles('pyproject.toml') != '' }}
+        run: |
+          python -m pip install -q "ruff>=0.6" black "mypy>=1.10"
+          ruff check . --output-format=github
+          ruff format --check . || black --check .
+          mypy . || true          # make this fail once the repo is typed throughout
+
+      - name: Checkstyle (Java)
+        if: ${{ hashFiles('pom.xml', 'build.gradle*') != '' }}
+        run: |
+          if [ -f pom.xml ]; then mvn -B -q checkstyle:check; else ./gradlew checkstyleMain --continue; fi
+
+      - name: gofmt + golangci-lint (Go)
+        if: ${{ hashFiles('go.mod') != '' }}
+        run: |
+          test -z "$(gofmt -l .)" || { echo "run: gofmt -w ."; exit 1; }
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          "$HOME/go/bin/golangci-lint" run ./...
+
+      # ── 3. Pre-production hygiene (skill section 9) ───────────────────────────
+      - name: Block leftover debug logs and dead code
+        run: |
+          echo "── leftover console.log/debug:"
+          if grep -rnE --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+               "console\.(log|debug|info|trace)[[:space:]]*\(" src 2>/dev/null; then
+            echo "Delete before merge (or use a logger with a level)."; exit 1
+          fi
+          echo "── stray debugger / print:"
+          grep -rnE --include="*.java" --include="*.go" --include="*.py" \
+               "debugger|System\.out\.print|fmt\.Print" src 2>/dev/null && exit 1 || true
+          echo "── TODO without a ticket (warning, not blocking):"
+          grep -rn "TODO" --include="*.ts" --include="*.py" --include="*.java" --include="*.go" src 2>/dev/null \
+            | grep -vE "TODO[[:space:]]*[:(][[:space:]]*(AC-|JIRA|#[0-9])" | head -20 || true
+
+      - name: File size and commit count (soft check)
+        run: |
+          echo "Files over 400 lines:"; find src -name '*.ts*' -o -name '*.py' -o -name '*.java' | xargs wc -l 2>/dev/null | awk '$1>400 && $2!="total"'
+          echo "Average functions per file:"; python3 tools/cc-scan.py . --json 2>/dev/null | head -20 || true
+
+      - name: Store the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-code-report
+          path: clean-code-report.json
+          retention-days: 14
+
+      - name: Comment on the PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            let rep = {};
+            try { rep = JSON.parse(fs.readFileSync("clean-code-report.json", "utf8")); } catch {}
+            const c = rep.counts || {};
+            const body = [
+              `### Clean Code - ${rep.score ?? "?"}/100 (grade ${rep.grade ?? "?"})`,
+              `error **${c.error ?? 0}** · warning **${c.warning ?? 0}** · info **${c.info ?? 0}**`,
+              "",
+              ...(rep.findings || []).slice(0, 25).map(f =>
+                `- \`${f.file}:${f.line}\` **${f.rule}** — ${f.message}${f.hint ? ` _(${f.hint})_` : ""}`),
+              (rep.findings || []).length > 25 ? `... ${rep.findings.length - 25} more in the artifact` : "",
+              "",
+              `> Skill: \`clean-code\` - new rules go in \`skills/clean-code/references/\`.,
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number, body,
+            });
+
+  # ── Nightly: whole repo, compared with the baseline, alarms on regression ───
+  full-repo-nightly:
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Whole repo (no baseline)
+        run: python3 tools/cc-scan.py . --no-baseline --fail-on error --json -o cc-full.json
+      - name: Print the worst rules
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, collections
+          rep = json.load(open("cc-full.json"))
+          print(f"Score: {rep['score']}/100 - {rep['filesScanned']} files")
+          for rule, n in collections.Counter(f["rule"] for f in rep["findings"]).most_common(10):
+              print(f"  {n:>5}  {rule}")
+          PY

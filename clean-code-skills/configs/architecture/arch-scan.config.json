@@ -1,0 +1,87 @@
+{
+  "_comment": "Drop this next to the source tree you scan (repo root or src/). arch-scan.py reads arch-scan.config.json / architecture.config.json from the scanned directory only.",
+  "layers": [
+    {
+      "name": "domain",
+      "rank": 0,
+      "include": [
+        "**/domain/**",
+        "**/models/**",
+        "**/entities/**"
+      ],
+      "_why": "business rules; no framework, no driver, no HTTP"
+    },
+    {
+      "name": "application",
+      "rank": 1,
+      "include": [
+        "**/application/**",
+        "**/use_cases/**",
+        "**/ports/**"
+      ],
+      "_why": "use cases + the interfaces they need implemented"
+    },
+    {
+      "name": "infrastructure",
+      "rank": 2,
+      "include": [
+        "**/infrastructure/**",
+        "**/persistence/**",
+        "**/adapters/**",
+        "**/db/**"
+      ],
+      "_why": "SQL, HTTP clients, queues, file systems"
+    },
+    {
+      "name": "interface",
+      "rank": 3,
+      "include": [
+        "**/interface/**",
+        "**/entrypoints/**/*",
+        "**/interfaces/**/*",
+        "**/api/**",
+        "**/controllers/**",
+        "**/handlers/**",
+        "**/routes/**",
+        "**/cli/**",
+        "main.py",
+        "main.go"
+      ],
+      "_why": "entry points and the composition root"
+    }
+  ],
+  "frameworkPackages": {
+    "domain": [
+      "react",
+      "express",
+      "sqlalchemy",
+      "django",
+      "fastapi",
+      "org.springframework",
+      "org.hibernate",
+      "net/http",
+      "gorm.io"
+    ],
+    "application": [
+      "sqlalchemy",
+      "psycopg2",
+      "org.hibernate",
+      "express"
+    ]
+  },
+  "boundaries": [
+    {
+      "name": "features",
+      "root": "features",
+      "api": [
+        "**/index.ts",
+        "**/api.ts",
+        "**/contracts.ts",
+        "**/api/__init__.py",
+        "**/public/**"
+      ]
+    }
+  ],
+  "rootPackages": [],
+  "maxUnclassifiedPct": 10.0
+}

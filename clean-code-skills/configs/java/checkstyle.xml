@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+   Clean Code for Java/Kotlin on the JVM - mapped 1-1 onto the clean-code skill.
+  Standalone:    java -jar checkstyle-all.jar -c checkstyle.xml src/main/java
+  Maven/Gradle:  add maven-checkstyle-plugin (or the Gradle plugin) with config file = this file.
+  The point: what follows stops being a reviewer preference and becomes a contract.
+-->
+<module name="Checker">
+  <property name="severity" value="warning"/>
+  <property name="fileExtensions" value="java"/>
+  <property name="charset" value="UTF-8"/>
+
+  <!-- ===== 5. Formatting ===== -->
+  <module name="LineLength">
+    <property name="max" value="120"/>
+    <property name="ignorePattern" value="^package.*|^import.*|https?://"/>
+  </module>
+  <module name="FileTabCharacter"/>
+  <module name="NewlineAtEndOfFile"/>
+  <module name="RegexpSingleline">
+    <property name="format" value="\s+$"/>
+    <property name="message" value="Trailing whitespace at end of line."/>
+  </module>
+
+  <!-- ===== 9. Source health: no debt, no dead code ===== -->
+  <module name="FileLength">
+    <property name="max" value="400"/>
+  </module>
+
+  <module name="TreeWalker">
+    <!-- ===== 4. Comments: leave no debt in the code ===== -->
+    <module name="TodoComment">
+      <property name="format" value="(TODO|FIXME|XXX|HACK)"/>
+      <property name="severity" value="info"/>
+    </module>
+
+    <!-- ===== 2. Naming ===== -->
+    <module name="ConstantName"/>
+    <module name="LocalVariableName"/>
+    <module name="MemberName"/>
+    <module name="MethodName"/>
+    <module name="PackageName"/>
+    <module name="ParameterName"/>
+    <module name="TypeName"/>
+    <module name="AbbreviationAsWordInName">
+      <property name="allowedAbbreviationLength" value="1"/>
+    </module>
+
+    <!-- ===== 3. Functions: small, few parameters, few branches ===== -->
+    <module name="MethodLength">
+      <property name="max" value="40"/>
+      <property name="countEmpty" value="false"/>
+    </module>
+    <module name="ParameterNumber">
+      <property name="max" value="3"/>
+      <property name="ignoreOverriddenMethods" value="true"/>
+    </module>
+    <module name="CyclomaticComplexity">
+      <property name="max" value="10"/>
+      <property name="severity" value="warning"/>
+    </module>
+    <module name="NestedIfDepth">
+      <property name="max" value="2"/>
+    </module>
+    <module name="NestedTryDepth">
+      <property name="max" value="1"/>
+    </module>
+    <module name="BooleanExpressionComplexity">
+      <property name="max" value="3"/>
+    </module>
+    <module name="ReturnCount">
+      <property name="max" value="4"/>
+      <property name="format" value="^equals$"/>
+    </module>
+    <module name="MissingSwitchDefault"/>
+    <module name="FallThrough"/>
+
+    <!-- ===== 4. Comment ===== -->
+    <module name="Indentation">
+      <property name="basicOffset" value="4"/>
+      <property name="caseIndent" value="4"/>
+    </module>
+    <module name="JavadocMethod">
+      <property name="accessModifiers" value="public"/>
+      <property name="allowMissingParamTags" value="true"/>
+      <property name="allowMissingReturnTag" value="true"/>
+    </module>
+
+    <!-- ===== 6/7. Structure and exceptions ===== -->
+    <module name="EmptyCatchBlock">
+      <property name="exceptionVariableName" value="expected|ignored"/>
+    </module>
+    <module name="IllegalCatch"/>
+    <module name="IllegalThrows"/>
+    <module name="EqualsHashCode"/>
+    <module name="FinalClass"/>
+    <module name="HideUtilityClassConstructor"/>
+    <module name="InterfaceIsType"/>
+    <module name="VisibilityModifier">
+      <property name="protectedAllowed" value="true"/>
+    </module>
+
+    <!-- ===== 8/9. Cleanup ===== -->
+    <module name="MagicNumber">
+      <property name="ignoreNumbers" value="-1, 0, 1, 2"/>
+      <property name="ignoreAnnotation" value="true"/>
+      <property name="ignoreFieldDeclaration" value="true"/>
+    </module>
+    <module name="UnusedImports"/>
+    <module name="RedundantImport"/>
+    <module name="AvoidStarImport"/>
+    <module name="SimplifyBooleanExpression"/>
+    <module name="SimplifyBooleanReturn"/>
+    <module name="StringLiteralEquality"/>
+    <module name="UpperEll"/>
+    <module name="ModifierOrder"/>
+    <module name="NeedBraces"/>
+    <module name="LeftCurly"/>
+    <module name="RightCurly"/>
+    <module name="WhitespaceAfter"/>
+    <module name="NoWhitespaceBefore"/>
+    <module name="ArrayTypeStyle"/>
+    <module name="SuppressionCommentFilter">
+      <!-- deliberate exceptions are allowed: // CHECKSTYLE:OFF &lt;reason&gt; -->
+      <property name="offCommentFormat" value="CHECKSTYLE:OFF"/>
+      <property name="onCommentFormat" value="CHECKSTYLE:ON"/>
+    </module>
+  </module>
+</module>

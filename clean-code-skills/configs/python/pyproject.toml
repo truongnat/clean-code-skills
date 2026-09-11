@@ -1,0 +1,79 @@
+# ============================================================================
+# Standardised clean-code rules for Python - copy this block into your pyproject.toml.
+# Principle: the formatter decides layout, ruff decides *structure*.
+# No more style debates in code review.
+# ============================================================================
+
+[tool.ruff]
+line-length = 88            # Python follows Black/PEP8 (JS uses 120) - pick one and obey it
+target-version = "py311"
+src = ["src", "tests"]
+extend-exclude = ["migrations", "alembic", "build", "dist"]
+
+[tool.ruff.lint]
+# Rule set mapped 1-1 onto the clean-code skill sections (see the note per group)
+select = [
+  "E", "W", "F", "I",       # pycodestyle/flake8/import order (section 5 Formatting)
+  "N",                     # pep8-naming - consistent naming (section 2)
+  "UP", "PIE", "C4", "SIM",# modernisation & simplification (section 8 KISS)
+  "B",                     # flake8-bugbear - the classic traps
+  "RET",                   # flake8-return - guard clauses, no redundant else (sections 3, 6)
+  "ARG",                   # unused arguments (section 3)
+  "TRY", "EM", "TRY300",   # exception and message handling (section 7)
+  "LOG", "G",              # logging done right, no f-strings inside log calls
+  "PL",                    # pylint: length/nesting/parameters/magic values
+  "C901",                  # complexity (section 3)
+  "RUF", "ERA", "COM", "ISC", "INP", "TID", "PT",
+  "ANN", "D",              # type hints + docstrings (sections 1, 4)
+  "PTH",                   # pathlib thay os.path
+  "A",                     # do not shadow builtins
+  "T20",                   # leftover print() (section 9 - junk removal)
+  "S",                     # bandit basics
+  "DTZ",                   # timezone-aware datetimes
+]
+ignore = [
+  "COM812", "ISC001",   # conflict with Black
+  "E501",              # let Black own line length
+  "ANN401",           # `Any` is sometimes correct (at the boundary)
+  "D203", "D213",     # docstring style - keep the other convention
+  "D206", "D415",
+  "S101",             # assert in tests is idiomatic
+  "PLR0913",          # max-args below already reports it once, which is enough
+  "TRY003",           # long exception messages allowed
+  "B008",             # FastAPI Depends() in a default argument is valid
+]
+mccabe.max-complexity = 10
+pylint.max-args = 3
+pylint.max-statements = 20
+pylint.max-branches = 12
+pylint.max-nested-blocks = 2
+pylint.allow-magic-value-types = ["str", "bytes"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004", "ANN", "D", "S", "SLF001", "PLR0915"]
+"src/**/__init__.py" = ["F401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]                           # only if the team still runs isort next to ruff
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+files = ["src"]
+# pydantic/ORM boundaries usually need slack:
+# plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+addopts = "-q --strict-markers --maxfail=5"
+testpaths = ["tests"]

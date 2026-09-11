@@ -1,0 +1,20 @@
+[importlinter]
+root_package = app
+include_external_packages = True
+
+[importlinter:contract:layers]
+name = Layers point inward
+type = layers
+layers =
+    app.interface
+    app.infrastructure
+    app.application
+    app.domain
+
+[importlinter:contract:forbidden]
+name = Domain stays framework-free
+type = forbidden
+source_modules =
+    app.domain
+forbidden_modules =
+    sqlalchemy

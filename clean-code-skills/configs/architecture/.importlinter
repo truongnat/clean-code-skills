@@ -1,0 +1,37 @@
+# import-linter — Python contract file (pip install import-linter; run: lint-imports)
+# Kept next to the arch-scan example so the two agree on layer names and thresholds.
+[importlinter]
+root_package = app
+# Required when a `forbidden` contract names a third-party package (sqlalchemy, fastapi...).
+include_external_packages = True
+
+[importlinter:contract:layers]
+name = Layers point inward
+type = layers
+layers =
+    app.interface
+    app.infrastructure
+    app.application
+    app.domain
+ignore_imports =
+    app.domain.* -> app.application.ports
+
+[importlinter:contract:independence]
+name = Features do not reach into each other
+type = independence
+modules =
+    app.features.checkout
+    app.features.pricing
+    app.features.shipping
+ignore_imports =
+    app.features.checkout.* -> app.features.pricing.api
+
+[importlinter:contract:forbidden]
+name = Domain stays framework-free
+type = forbidden
+source_modules =
+    app.domain
+forbidden_modules =
+    sqlalchemy
+    fastapi
+    pydantic

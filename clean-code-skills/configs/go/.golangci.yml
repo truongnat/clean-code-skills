@@ -1,0 +1,123 @@
+# golangci-lint — Clean Code + architecture rules for Go (skill: clean-code)
+# Schema: golangci-lint v1. For v2 move everything under `linters.settings` and add `version: "2"`.
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  disable-all: true
+  enable:
+    # --- formatting: gofmt/gofumpt are not opinions, they are the standard ---
+    - gofmt
+    - gofumpt
+    - goimports
+    - gci
+    - whitespace
+    - wsl
+    - misspell
+    # --- dead code, redundancy, cheap fixes ---
+    - unused
+    - unparam
+    - unconvert
+    - nakedret
+    - ineffassign
+    - prealloc
+    # --- functions: small, few parameters, few branches ---
+    - funlen
+    - gocognit
+    - cyclop
+    - gocyclo
+    - nestif
+    # --- naming and docs ---
+    - revive
+    - varnamelen
+    # --- errors must be handled, never swallowed ---
+    - errcheck
+    - errorlint
+    - wrapcheck
+    - nilerr
+    - bodyclose
+    - contextcheck
+    - noctx
+    - makezero
+    - copyloopvar
+    - staticcheck
+    - gosimple
+    # --- structure: explicit types, no magic, no stray stdout ---
+    - exhaustruct
+    - goconst
+    - loggercheck
+    - forbidigo
+    # --- architecture: who may import whom (the arch-scan half, Go native) ---
+    - depguard
+
+linters-settings:
+  funlen:
+    lines: 60            # Go repeats `if err != nil` a lot, so the budget is larger than TS (40)
+    statements: 40
+    ignore-comments: true
+  gocognit:
+    min-complexity: 12
+  cyclop:
+    max-complexity: 12
+    skip-tests: true
+  gocyclo:
+    min-complexity: 12
+  nestif:
+    min-complexity: 4
+  varnamelen:
+    max-distance: 15
+    min-length: 2
+    ignore-type-params: true
+    ignore-declarations: true
+    ignore: [i, j, r, w, ok, db, tx, ctx, err]
+  goconst:
+    min-len: 4
+    min-occurrences: 3
+  revive:
+    rules:
+      - name: exported
+      - name: var-naming
+      - name: early-return
+      - name: indent-error-flow
+      - name: argument-limit
+        arguments: [4]
+      - name: bare-return
+      - name: modifies-parameter
+      - name: unhandled-error
+        arguments: ["fmt.Println", "fmt.Printf"]
+  forbidigo:
+    forbid:
+      - p: ^fmt\.Print.*$
+        msg: "no stdout logging in production code — use log/slog"
+  # depguard encodes the dependency rule; the same rule names as arch-scan.py, checked by the
+  # compiler's own import graph instead of a heuristic.
+  depguard:
+    rules:
+      domain:
+        files: ["**/internal/domain/**"]
+        deny:
+          - pkg: database/sql
+            desc: the domain must not know about a driver
+          - pkg: gorm.io
+            desc: put persistence in internal/adapters and pass a port
+          - pkg: net/http
+            desc: transport belongs at the edge
+          - pkg: yourmodule/internal/interfaces
+            desc: inner layers must not import outer layers
+      adapters:
+        files: ["**/internal/adapters/**"]
+        deny:
+          - pkg: yourmodule/internal/interfaces
+            desc: an adapter implements a port, it does not call the handler
+
+issues:
+  # Show everything: a truncated report teaches people to ignore the tool.
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - path: _test\.go
+      linters: [funlen, varnamelen, cyclop, gocognit, nestif, exhaustruct, noctx, depguard]
+    - path: cmd/
+      linters: [forbidigo]        # a CLI may print to stdout; nothing else may

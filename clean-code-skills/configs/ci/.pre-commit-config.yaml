@@ -1,0 +1,61 @@
+# pre-commit - the guardrail on the dev machine (everyone has git, nobody needs Node)
+# Install:  cp configs/ci/.pre-commit-config.yaml . && cp -r configs/ci/hooks . \
+#       && pipx install pre-commit && pre-commit install
+# (the `hygiene` hook calls `hooks/check-hygiene.sh` relative to the repo ROOT - copy hooks/ too)
+# One-off whole-repo run: pre-commit run --all-files
+#
+# Together with lint-staged? lint-staged suits JS monorepos; pre-commit works for
+# every language without node_modules. Pick one; do not run two overlapping sets.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=500]        # no large binaries in git
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        args: [--line-length=88]
+        exclude: ^(configs/python/src/orders_bad\.py)$   # deliberately bad demo, do not format
+
+  - repo: local
+    hooks:
+      # Team clean code: the same script CI runs, so "passes locally, fails in CI" is impossible
+      - id: cc-scan
+        name: cc-scan (Clean Code)
+        entry: python3 tools/cc-scan.py --fail-on error
+        language: system
+        types_or: [python, ts, tsx, java, kotlin, go, c, cpp, csharp]
+        pass_filenames: false          # scans the whole repo; set true for an incremental run
+
+      # Architecture gate: import direction. Cheap (0.2 s) and language-agnostic, so it earns
+      # a place at commit time; the exact tool (import-linter/ArchUnit) still runs in CI.
+      - id: arch-scan
+        name: arch-scan (layers & boundaries)
+        entry: bash hooks/check-arch.sh
+        language: system
+        pass_filenames: false
+      # Blocks debug logs, .only, conflict markers and stdout prints at commit time.
+      # The same script CI calls - so a local pass cannot diverge from the pipeline.
+      - id: hygiene
+        name: debug logs and conflict markers
+        entry: bash hooks/check-hygiene.sh
+        language: system
+        pass_filenames: false

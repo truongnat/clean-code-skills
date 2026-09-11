@@ -1,5 +1,54 @@
 # CHANGELOG
 
+## 1.4.1 — 2026-09-11 · CI templates: 3 bugs fixed, every pinned version refreshed
+
+The first CI run on this repo printed a deprecation warning, which exposed a worse problem: the
+templates the pack *hands to other people* carried the same stale actions, plus three defects that
+would only surface at runtime.
+
+### Fixed — `configs/ci/github-actions-clean-code.yml`
+- **The "Comment on the PR" step could never run.** A template literal was missing its closing
+  backtick, so the `github-script` body was a syntax error. Caught by extracting the script out of
+  the YAML and running `node --check` on it — `SyntaxError: Unexpected end of input`, now clean.
+- **`$CC_ARCH_FAIL_ON` was used but never defined.** The `env:` block declared `CC_FAIL_ON` and
+  `CC_ONLY_CHANGED` only, so the architecture gate expanded to `--fail-on ""` and died with
+  `arch-scan: error: argument --fail-on: invalid choice: ''`. Added `CC_ARCH_FAIL_ON: error`.
+- **The "nightly" whole-repo job ran on every push**, scanning the entire repo with
+  `--no-baseline --fail-on error`. On any repo with legacy code or deliberate test fixtures that is
+  a permanently red build, and a permanently red build teaches people to ignore the build. It now
+  runs on `schedule` or `workflow_dispatch`, and `workflow_dispatch` was added to the triggers so
+  it can still be run on demand.
+
+### Changed — pinned versions, checked against each project rather than guessed
+Every version below was read from the upstream project's latest release on 2026-09-11, and each
+floating major tag was confirmed to resolve before being written:
+
+| | was | now |
+|---|---|---|
+| `actions/checkout` | v4 | **v7** |
+| `actions/setup-node` | v4 | **v7** |
+| `actions/setup-python` | v5 | **v7** |
+| `actions/cache` | v4 | **v6** |
+| `actions/upload-artifact` | v4 | **v7** |
+| `actions/github-script` | v7 | **v9** |
+| `pre-commit-hooks` | v5.0.0 | **v6.0.0** |
+| `ruff-pre-commit` | v0.6.9 | **v0.16.7** |
+| `black` | 24.10.0 | **26.5.1** |
+
+- `node-version: 20` became `node-version: lts/*` — an alias cannot go stale the way the pin did.
+  That pin is what produced the deprecation warning in the first place.
+- `.github/workflows/self-check.yml` got the same bumps and re-ran green.
+
+### Fixed — a number that was never true
+- The 1.1.0 measurement note claimed the toolchain included **ESLint 10.10.0 + Prettier 3.6.2**.
+  `configs/js/package-lock.json` says **eslint 9.39.5** and **prettier 3.9.6**, and the README's own
+  row said ESLint 9.39. The CHANGELOG line named a version that was never installed; corrected
+  against the lockfile, and the README row now carries the exact patch versions.
+  This is precisely the failure the new dogfood CI step exists to catch — it guards the demo scores
+  but not prose version strings, which is worth knowing about the gate's reach.
+
+---
+
 ## 1.4.0 — 2026-09-11 · MIT licence, the pack gates itself, one debt paid
 
 ### Added
@@ -86,7 +135,7 @@
   meant a GitHub landing page with no README. Every install command now uses a `$PACK` variable set
   once at the top of `INSTALL.md`, so it no longer matters where you clone to, and the *Acceptance*
   block runs verbatim from the repo root (re-run after the move: **61/61**, **30/30**,
-  **292 references 0 broken**, demo **72.0/100**, python arch demo **82.0/100**).
+  **294 references 0 broken**, demo **72.0/100**, python arch demo **82.0/100**).
 - **The three verification JARs are no longer vendored** (`checkstyle.jar` 19M, `archunit-1.3.0.jar`
   4.4M, `slf4j-api-2.0.13.jar` 68K = 23.4M). They are third-party binaries under LGPL-2.1/Apache-2.0
   and nothing in the pack needs them at install time. `javalib/` and `*.jar` are now ignored, and the
@@ -148,7 +197,7 @@
 - Direct fetches of the vendor docs failed in this sandbox (DNS blocked); the paths come from search
   results, which is a weaker source than the doc itself. Treat the four unexecuted rows as a
   starting point to confirm, not as tested fact.
-- `tools/check_links.py` → **292 references, 0 broken** (was 264; `AGENTS.md` adds 8).
+- `tools/check_links.py` → **294 references, 0 broken** (was 264; `AGENTS.md` adds 8).
   `run_checks.py` **61/61**, `run_arch_checks.py` **30/30**, both unchanged by this release.
 
 ---
@@ -256,7 +305,7 @@
 
 ### Notes on measurement
 - Everything quoted below was re-run on 2026-09-11, the release date; the toolchains used are ruff 0.16.6,
-  black 26.5.1, mypy 2.3.1, import-linter 2.15, ESLint 10.10.0 + Prettier 3.6.2,
+  black 26.5.1, mypy 2.3.1, import-linter 2.15, ESLint 9.39.5 + Prettier 3.9.6,
   Checkstyle 10.21.4 on OpenJDK 11, and ArchUnit 1.3.0.
 - `python3 tools/cc-scan.py .` from the pack root scans 75 code files in ~0.21 s (before the fix in
   §"Fixed" of 1.0.1 it crawled `configs/js/node_modules`: 2163 files, 50 s).
@@ -281,8 +330,8 @@ Numbers quoted inside the last batch were re-measured rather than carried over:
 | What | Was written | Re-measured on the release date |
 |---|---|---|
 | `tools/tests/run_checks.py` | 60/60 | **61/61** (the docs guard makes 61) |
-| `tools/check_links.py` | 200 references | **292 references, 0 broken** |
-| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 292 references** — the acceptance block was re-run line by line and now matches its own output |
+| `tools/check_links.py` | 200 references | **294 references, 0 broken** |
+| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 294 references** — the acceptance block was re-run line by line and now matches its own output |
 | `tools/demo` legacy line numbers | 17 / 48 / 55, "5 levels", 1 TODO | **15 / 50 / 56, 7 levels, 2 TODOs** — the score is unchanged at **72.0/100 (4 errors)** |
 | `cc-scan.py` self-review | 32.8/100, error=11 warning=23 info=1 | `tools/` (5 files) **0.0/100, error=18 warning=46 info=2**; `cc-scan.py` alone **35.8/100, error=11 warning=20 info=1**; raw defaults **0.0/100** |
 | `cc-scan.py` accepted-debt counts | MAGIC_NUMBER 41, DEBUG_STATEMENT 20, DEEP_NESTING 15 | across `tools/`: **MAGIC_NUMBER 55, DEBUG_STATEMENT 46, DEEP_NESTING 32, HARD_COMPLEXITY 12, HUGE_FUNCTION 5** |

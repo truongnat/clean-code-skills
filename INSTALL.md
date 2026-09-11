@@ -204,7 +204,7 @@ import line and give the ticket a deadline.
 ```bash
 python3 tools/tests/run_checks.py | tail -1      # → 61/61 checks passed
 python3 tools/tests/run_arch_checks.py | tail -1 # → 30/30 arch checks passed
-python3 tools/check_links.py | tail -1           # → 292 references, 0 broken links
+python3 tools/check_links.py | tail -1           # → 294 references, 0 broken links
 python3 tools/cc-scan.py tools/demo/src/legacy-order-service.ts \
         tools/demo/src/legacy-renderer.ts --no-baseline | sed -n 2p
                                                                     # → 72.0/100 (grade C)

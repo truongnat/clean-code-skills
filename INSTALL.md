@@ -24,7 +24,7 @@ Two artefacts do all the work, and every provider takes at least one of them:
 | **Codex (ChatGPT)** | `AGENTS.md`, merged root→cwd | `~/.codex/skills/` | `codex --print-instructions` | from docs |
 | **Cursor** | `AGENTS.md` + `.cursor/rules/*.mdc` | — (use the rules file) | the Rules pane lists the file | from docs |
 | **Grok (xAI)** | `AGENTS.md` family + `.grok/rules/*.md`; also auto-reads `.claude/` | `.claude/skills/` — reused as-is | `grok inspect` | from docs |
-| **Antigravity (Google)** | `AGENTS.md`; global `~/.gemini/GEMINI.md`; `.agents/rules/` | `.agents/skills/` (legacy `.agent/skills/`) | the Agent Manager's skill list | from docs |
+| **Antigravity (Google)** | `AGENTS.md` / `GEMINI.md` per directory; `.agents/rules/` | workspace `.agents/skills/` · global `~/.gemini/config/skills/` · or a plugin (§1c) | ask it to list its skills | **run here** |
 
 **Status** means what it says. The Claude Code row was executed in this sandbox; the other four are
 transcribed from each vendor's documentation and were **not run** — same honesty rule as the
@@ -121,8 +121,17 @@ Then ask your agent *"list the skills you have"* — the seven `clean-*` entries
 
 Notes that cost something to learn:
 
-- **Antigravity's global skills directory is `~/.agents/skills`**, which is why the hub lives there:
-  one directory serves as both the hub and Antigravity's own global location.
+- **Antigravity's global directory is `~/.gemini/config/`, not `~/.agents/`.** `.agents/` is
+  Antigravity's *workspace* root (it walks up from your cwd to the repo root). An earlier version of
+  this file claimed `~/.agents/skills` was the global location — that was inferred from one machine's
+  layout, not read from the docs, and it was wrong. The authoritative source ships with the product:
+  `~/.gemini/antigravity-ide/builtin/skills/agy-customizations/docs/skills.md`. Its global skills
+  path is `~/.gemini/config/skills/<name>/SKILL.md`; see §1c for the tidier plugin route.
+- Why the hub install reached Antigravity anyway on the machine this was tested on:
+  `~/.gemini/config/skills` was *itself* already a symlink to `~/.agents/skills`, set up months
+  earlier. So installing into the hub reached Antigravity through a machine-local symlink, not
+  because `.agents/` is a global path. If your `~/.gemini/config/skills` is a real directory,
+  symlink the seven skills into it (or use the plugin in §1c) — the hub alone will not be found.
 - **Do not install `AGENTS.md` globally.** It is written for *a* repo and names paths like
   `tools/cc-scan.py`; loaded into every session on the machine it would point agents at files that
   do not exist. Skills are the right global unit precisely because their `description` gates them —
@@ -132,6 +141,46 @@ Notes that cost something to learn:
 - `~/.grok/skills` and `~/.cursor/skills` are undocumented by their vendors as far as this pack's
   research went — they were found by inspecting a machine where both are installed. Treat them as
   observed, not promised.
+
+## 1c. Antigravity: install the whole pack as one plugin
+
+Antigravity treats this repo as a **plugin** if it finds a `plugin.json` at the root — which it now
+ships. A plugin is a bundle of skills, rules, hooks and MCP configs, and discovery is automatic in
+any customization root, so the install is one symlink instead of seven:
+
+```bash
+mkdir -p ~/.gemini/config/plugins
+ln -sfn /path/to/clean-code-skills ~/.gemini/config/plugins/clean-code-skills
+```
+
+The repo's existing `skills/clean-*` folders are ingested as the plugin's skills. Per project
+instead of per machine: put it under `<repo>/.agents/plugins/` (or commit it as a submodule) so the
+team gets it from version control.
+
+**Pick one route, not both.** Symlinking the seven skills into `~/.gemini/config/skills/` *and*
+enabling the plugin registers the same seven skills twice. The vendor docs promise namespacing for
+collisions and deduplication for *rules*; they do not promise skill deduplication, so do not rely
+on it.
+
+### Why there is no `/clean-code` slash command
+
+There isn't one, and that is by design — not a broken install. Antigravity's customization system
+has exactly five types (Rules, Skills, Plugins, Hooks, MCP Servers) and none of them is a command.
+Skills load by **progressive disclosure**, quoting the shipped docs:
+
+> Skills are not loaded into the context window by default. Only their names and descriptions are
+> injected. The full content of a skill is only loaded if the model (or the user) explicitly decides
+> to activate it.
+
+So you invoke a skill by describing the task, or by naming it — that naming *is* the documented
+"or the user explicitly decides":
+
+```
+use the clean-code-review skill on this diff
+```
+
+The `description` field is therefore the whole activation mechanism on every provider. If a skill
+never fires, rewrite its description before touching anything else.
 
 ## 2. Put the scanners in your repo (the skills reference these paths)
 

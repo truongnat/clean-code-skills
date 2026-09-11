@@ -24,7 +24,8 @@ clean-code-skills/
 │   └── demo/                        ← one business feature: legacy (72/100) vs refactored (100/100)
 ├── configs/         ⑤ Working configs: JS/TS · Python · Java · Go · CI · Sonar · hooks · architecture
 ├── AGENTS.md        ⑥ The portable one-pager every agent reads (Codex/Cursor/Grok/Antigravity)
-└── .github/         ⑦ The pack gating itself: suites + links + dogfood on every push
+├── plugin.json      ⑦ Manifest: makes this repo installable as one Antigravity plugin
+└── .github/         ⑧ The pack gating itself: suites + links + dogfood on every push
 ```
 
 Three layers, one standard: **machines enforce what is measurable** (`tools/`, `configs/`) →

@@ -1,5 +1,48 @@
 # CHANGELOG
 
+## 1.5.0 — 2026-09-11 · Antigravity: read the vendor docs, correct a wrong claim, ship a plugin
+
+Triggered by one question — "why does Antigravity not suggest a slash command?" — which turned out
+to have a documented answer and to expose a claim this pack had asserted without reading the source.
+
+### Fixed — a claim that was inferred, not verified
+- 1.3.0 stated **"`~/.agents/skills` is also Antigravity's global skills directory"**. That is wrong.
+  Antigravity's global root is **`~/.gemini/config/`**; `.agents/` is its *workspace* root, walked
+  from the cwd up to the repo root. The claim came from inspecting one machine's layout instead of
+  reading the docs — exactly the failure mode `AGENTS.md` forbids ("do not invent paths").
+- The real explanation, now recorded: on that machine `~/.gemini/config/skills` was *itself* a
+  symlink to `~/.agents/skills`, created weeks before. The hub install reached Antigravity through
+  that machine-local symlink, not through any documented global path. On a machine where
+  `~/.gemini/config/skills` is a real directory, the hub alone would **not** have been found.
+- The authoritative source was on disk the whole time and is now cited instead of a blog:
+  `~/.gemini/antigravity-ide/builtin/skills/agy-customizations/docs/{skills,plugins,rules}.md`.
+
+### Added
+- **`plugin.json` at the repo root.** Antigravity discovers any directory carrying that manifest as
+  a plugin — a bundle of skills, rules, hooks and MCP configs — so the whole pack installs with one
+  symlink into `~/.gemini/config/plugins/` instead of seven into the skills directory. The existing
+  `skills/clean-*` folders are ingested as the plugin's skills; no restructuring was needed.
+- **`INSTALL.md` §1c** documents the plugin route, the per-project variant
+  (`<repo>/.agents/plugins/`), and the warning that the two routes are **mutually exclusive**: the
+  docs promise namespacing for collisions and deduplication for *rules*, but say nothing about
+  deduplicating skills, so running both would register the same seven twice.
+
+### Documented — why there is no `/clean-code` in Antigravity
+Not a broken install: the customization system has exactly five types (Rules, Skills, Plugins,
+Hooks, MCP Servers) and none of them is a command. Skills load by **progressive disclosure** — only
+names and descriptions are injected, and the body is read "if the model (or the user) explicitly
+decides to activate it". Naming the skill in the prompt *is* that documented user path. The
+consequence worth internalising: on every provider here, the `description` field is the entire
+activation mechanism, so a skill that never fires is a description problem first.
+
+### Not done, on purpose
+- **The plugin was not enabled on the test machine.** Its seven skills already resolve through
+  `~/.gemini/config/skills` → hub, and adding the plugin would double-register them. Shipping the
+  manifest for other people costs nothing; enabling it here would have traded a working install for
+  a duplicated one.
+
+---
+
 ## 1.4.1 — 2026-09-11 · CI templates: 3 bugs fixed, every pinned version refreshed
 
 The first CI run on this repo printed a deprecation warning, which exposed a worse problem: the
@@ -112,8 +155,9 @@ floating major tag was confirmed to resolve before being written:
   paths checked). `cc-scan --version` → 1.0.1 and `arch-scan --version` → 1.0.0 from `/tmp`, i.e.
   outside the repo. The seven skills then appeared in a live agent session, which is the only
   end-to-end proof that matters.
-- **`~/.agents/skills` is also Antigravity's global skills directory**, so the hub and Antigravity's
-  own location are the same folder — no separate step.
+- The hub install reached Antigravity with no extra step. **The reason recorded here at the time was
+  wrong** and is corrected in 1.5.0: `~/.agents/skills` is not Antigravity's global path; on this
+  machine `~/.gemini/config/skills` happened to be a pre-existing symlink pointing at the hub.
 - `~/.grok/skills` and `~/.cursor/skills` are **not documented by their vendors** as far as this
   pack's research reached; they were found by inspecting an installed machine. Recorded as observed,
   not promised.

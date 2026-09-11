@@ -3,7 +3,7 @@ package com.acme.report;
 import java.util.List;
 import java.util.Map;
 
-// FIXME: tach ra khi xong sprint
+// FIXME: split it out once the sprint is over
 // private void oldExport() { }
 
 public class ReportGenerator {

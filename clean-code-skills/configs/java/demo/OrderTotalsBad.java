@@ -1,6 +1,6 @@
 package com.acme.billing;
 
-// TODO: tach ham nay ra, viet tu 2019
+// TODO: split this method up, written back in 2019
 // private double legacyTax(double t) { return t * 1.1; }
 
 public class OrderTotalsBad {

@@ -21,7 +21,7 @@ def process_payment(order, user, coupon, retry_count, send_email, is_test_mode, 
             else:
                 total = total + item.price * item.qty
         else:
-            print("item gia am bo qua")
+            print("negative price, skipping item")
     if coupon:
         total = total - 50000
     tax = total * 0.1
@@ -33,7 +33,7 @@ def process_payment(order, user, coupon, retry_count, send_email, is_test_mode, 
     except Exception:
         pass
     except ValueError as exc:
-        print("loi", exc)
+        print("error", exc)
     if grand > 1000000:
         if send_email:
             notify(user, "Large order: %s" % grand)
@@ -50,10 +50,10 @@ def parse(raw):
 def money_to_text(value, uppercase, pad):
     result = ""
     if value < 0:
-        result = "am "
+        result = "minus "
         value = -value
-    dong = int(value)
-    result = result + str(dong) + " dong"
+    vnd = int(value)
+    result = result + str(vnd) + " VND"
     if uppercase:
         result = result.upper()
     if pad:

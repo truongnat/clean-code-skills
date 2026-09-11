@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// TODO: tach ham nay ra, viet tu 2019
+// TODO: split this function up, written back in 2019
 // func legacyTotal() { }
 
 var maxItems = 50

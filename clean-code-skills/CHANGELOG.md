@@ -67,6 +67,19 @@
   unsupported claims). `prompts/README.md` documents the shape once. Prompt 01's placeholder title
   typo (`ĐỊNH DẦN`) and prompt 03's inconsistent `500000` → `500_000_000` example were fixed in the
   same pass.
+- **Second pass: unaccented Vietnamese.** The first sweep searched for Vietnamese *diacritics*, so
+  ASCII-transliterated Vietnamese survived it — the kind people type without a Vietnamese keyboard.
+  A dictionary-based sweep (`/usr/share/dict`, tokens absent from English, word-boundary matched)
+  found 14 more spots and they are now English: the `HOA DON` invoice labels in
+  `fixtures/messy/{order-service.ts,invoice-render.ts}` (changed identically so the
+  `DUPLICATE_BLOCK` pair still matches), `suppressed.ts`'s exception-reason header,
+  `worker.go`'s and `ReportGenerator.java`'s TODO/FIXME text, `checkout.py`'s prints and its
+  `dong` → `vnd` variable, `configs/go/demo/bad.go` + `configs/java/demo/OrderTotalsBad.java`
+  ("tach ham nay ra, viet tu 2019"), `configs/python/src/orders_bad.py`'s exception message,
+  `configs/python/pyproject.toml`, `configs/ci/hooks/check-hygiene.sh`, and four spots in
+  `tools/tests/run_checks.py` (two check labels, a temp-dir name, and the `viet` variable →
+  `non_ascii`). Line counts and line numbers were preserved throughout, so every fixture assertion
+  still lands: **61/61**, **30/30**, demo still **72.0/100 (4 errors)**.
 - The 1.0.0/1.0.1 entries were translated **without touching their numbers** — `53/53`, `92
   references`, `99 references` and `20 rules` are what was true at those releases; the deltas are
   documented in this entry instead. One truncated sentence was repaired: `COMMENTED_CODE` … `→ si
@@ -115,8 +128,8 @@ Numbers quoted inside the last batch were re-measured rather than carried over:
 | What | Was written | Re-measured on the release date |
 |---|---|---|
 | `tools/tests/run_checks.py` | 60/60 | **61/61** (the docs guard makes 61) |
-| `tools/check_links.py` | 200 references | **255 references, 0 broken** |
-| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 255 references** — the acceptance block was re-run line by line and now matches its own output |
+| `tools/check_links.py` | 200 references | **264 references, 0 broken** |
+| the same two figures in `INSTALL.md` §Acceptance and `tools/README.md` §6 | 60/60 · 200 references | **61/61 · 264 references** — the acceptance block was re-run line by line and now matches its own output |
 | `tools/demo` legacy line numbers | 17 / 48 / 55, "5 levels", 1 TODO | **15 / 50 / 56, 7 levels, 2 TODOs** — the score is unchanged at **72.0/100 (4 errors)** |
 | `cc-scan.py` self-review | 32.8/100, error=11 warning=23 info=1 | `tools/` (5 files) **0.0/100, error=18 warning=46 info=2**; `cc-scan.py` alone **35.8/100, error=11 warning=20 info=1**; raw defaults **0.0/100** |
 | `cc-scan.py` accepted-debt counts | MAGIC_NUMBER 41, DEBUG_STATEMENT 20, DEEP_NESTING 15 | across `tools/`: **MAGIC_NUMBER 55, DEBUG_STATEMENT 46, DEEP_NESTING 32, HARD_COMPLEXITY 12, HUGE_FUNCTION 5** |
@@ -141,6 +154,11 @@ These stay in Vietnamese because they *are* the example:
 
 A translated glossary example would teach the opposite lesson: the glossary exists precisely to map
 the business's own words onto code identifiers.
+
+Not counted above: `minh` appears as the *owner's name* in the `TODO(AC-1240, minh)` examples in
+`prompts/06-comment-cleaner.md`, `skills/clean-code/references/04-comments.md` and
+`skills/clean-code/snippets/bad-vs-good.md`. A TODO needs a real-looking owner; a person's name is
+not text to translate.
 
 No rule, threshold or command changed anywhere in this conversion.
 

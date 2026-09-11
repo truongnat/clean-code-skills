@@ -72,7 +72,7 @@ def main() -> int:
     messy = report(MESSY, "--no-baseline")
     missing = [r for r in rule_names if messy["counts"].get(r, 0) < 1]
     check(f"messy: all {len(rule_names)} rules fired", not missing, f"not seen: {missing}")
-    check("messy: exit 1 khi --fail-on error", messy["_exit"] == 1, f"exit={messy['_exit']}")
+    check("messy: exit 1 under --fail-on error", messy["_exit"] == 1, f"exit={messy['_exit']}")
     check("messy: score <= 60 (grade D/E)", messy["score"] <= 60, f"score={messy['score']}")
 
     # 2) clean fixture: not a single false positive
@@ -152,7 +152,7 @@ def main() -> int:
         after = report(work)
         check("baseline: --update-baseline exits 0", code == 0, out[-200:])
         check("baseline: rescan leaves 0 new findings", not after["findings"], f"{len(after['findings'])}")
-        check("baseline: ghi .clean-code-baseline.json", (work / ".clean-code-baseline.json").is_file())
+        check("baseline: writes .clean-code-baseline.json", (work / ".clean-code-baseline.json").is_file())
         check("baseline: suppressed count equals the findings frozen",
               after["suppressedByBaseline"] >= 1, f"suppressed={after['suppressedByBaseline']}")
         check("baseline: --no-baseline still fails, for comparison",
@@ -195,7 +195,7 @@ def main() -> int:
               {"findings", "score", "grade", "counts", "config", "filesScanned"} <= set(data))
         check("cli: --list-rules prints every rule",
               all(r in run("--list-rules")[1] for r in rule_names))
-        code_missing, out_missing = run(Path(tmp) / "khong-ton-tai")
+        code_missing, out_missing = run(Path(tmp) / "does-not-exist")
         check("cli: nonexistent path -> exit 2 + warning",
               code_missing == 2 and "not found" in out_missing, f"exit={code_missing}")
 
@@ -268,7 +268,7 @@ def main() -> int:
     #     Vietnamese file once reappeared over a translated one after a rename. A translated
     #     document is easy to lose silently, so the H1 of every doc is checked here.
     root = TOOLS.parent
-    viet = re.compile(r"[\u00c0-\u024f\u1e00-\u1eff]")
+    non_ascii = re.compile(r"[\u00c0-\u024f\u1e00-\u1eff]")
     stale = []
     for folder in ("skills", "playbook"):
         for md in sorted((root / folder).rglob("*.md")):
@@ -276,7 +276,7 @@ def main() -> int:
                           if line.startswith("# ")), "")
             if not title:
                 stale.append(f"{md.relative_to(root)}: no H1 title")
-            elif viet.search(title):
+            elif non_ascii.search(title):
                 stale.append(f"{md.relative_to(root)}: {title[:50]}")
     check("docs: every markdown file in skills/ and playbook/ has an English H1 title",
           not stale, "; ".join(stale[:3]) or f"{sum(1 for f in (root / 'skills').rglob('*.md'))}+"

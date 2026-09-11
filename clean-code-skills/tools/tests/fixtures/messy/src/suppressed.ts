@@ -1,6 +1,6 @@
 // cc-scan:allow-file LONG_FUNCTION
-// Ly do (bat buoc khi xin ngoai le): fixture nay ton tai chi de chung minh co che
-// xin-ngoai-le co kiem soat cua cc-scan: khai bao dau file, neu ro ly do.
+// Reason (required when claiming an exception): this fixture exists only to prove cc-scan's
+// controlled escape hatch - declared at the top of the file, with the reason stated.
 
 import { Order } from "./order";
 

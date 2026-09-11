@@ -8,7 +8,7 @@ changed=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
 
 status=0
 
-# 1) console.log/debugger trong JS/TS
+# 1) console.log/debugger in JS/TS
 js=$(echo "$changed" | grep -E '\.(ts|tsx|js|jsx)$' || true)
 if [ -n "$js" ]; then
   # shellcheck disable=SC2086

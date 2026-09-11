@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// TODO: tach thanh cac ham nho
+// TODO: split this into smaller functions
 // func legacyHandler(w http.ResponseWriter) { }
 
 var MaxRetry = 3

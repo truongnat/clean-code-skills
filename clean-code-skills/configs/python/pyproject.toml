@@ -25,7 +25,7 @@ select = [
   "C901",                  # complexity (section 3)
   "RUF", "ERA", "COM", "ISC", "INP", "TID", "PT",
   "ANN", "D",              # type hints + docstrings (sections 1, 4)
-  "PTH",                   # pathlib thay os.path
+  "PTH",                   # pathlib over os.path
   "A",                     # do not shadow builtins
   "T20",                   # leftover print() (section 9 - junk removal)
   "S",                     # bandit basics

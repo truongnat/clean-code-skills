@@ -2,13 +2,13 @@ import { Order } from "./order";
 
 export function renderInvoice(order: Order): string {
   const lines: string[] = [];
-  lines.push("HOA DON");
-  lines.push("ma: " + order.id);
-  lines.push("tong: " + order.total);
-  lines.push("thue: " + order.tax);
-  lines.push("ngay: " + order.date);
-  lines.push("khach: " + order.customer);
-  lines.push("dien thoai: " + order.phone);
-  lines.push("dia chi: " + order.address);
+  lines.push("INVOICE");
+  lines.push("id: " + order.id);
+  lines.push("total: " + order.total);
+  lines.push("tax: " + order.tax);
+  lines.push("date: " + order.date);
+  lines.push("customer: " + order.customer);
+  lines.push("phone: " + order.phone);
+  lines.push("address: " + order.address);
   return lines.join("\n");
 }

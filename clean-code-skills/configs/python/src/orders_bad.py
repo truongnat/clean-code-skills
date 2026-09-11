@@ -35,7 +35,7 @@ def calc(cart, user, cfg, mode, send_email, is_test, dbg):
             if user.get("email"):
                 print("mail", user["email"], total)
             else:
-                raise Exception("user khong co email")
+                raise Exception("user has no email")
         else:
             raise Exception("missing user")
     return total

@@ -99,9 +99,9 @@ What it does: writes the skills into the hub at `~/.agents/skills/`, records the
 `~/.agents/.skill-lock.json`, and symlinks the hub into each agent's own skills directory. That
 lock file is what makes `update` and `remove` work — the reason to prefer this over copying by hand.
 
-### Two CLI defects worth knowing (observed 2026-09-11, `skills@latest`)
+### Three CLI defects & quirks worth knowing (observed 2026-09-11, `skills@latest`)
 
-Both were hit while installing this pack, and "Done!" was printed in each case:
+All were observed while installing this pack, and "Done!" was printed:
 
 1. **A comma-separated agent list is rejected.** `-a codex,cursor` fails with
    `Invalid agents: codex,cursor` — even though the error message then lists `codex` and `cursor`
@@ -125,6 +125,14 @@ for s in clean-code clean-architecture clean-code-review clean-code-naming \
   ln -sfn "$HOME/.agents/skills/$s" "$HOME/.codex/skills/$s"
 done
 ```
+
+3. **`--all -g` reports `■ Failed to install 14` (harmless).** `--all` targets all ~70 supported
+   agents. Two agents (`Eve` and `PromptScript`) do not support global installs (`-g`), so 7 skills ×
+   2 agents = 14 failures reported at the end. All 7 skills **are successfully installed** to the hub
+   and symlinked to all major global agents (Claude Code, Codex, Antigravity, Cursor, Cline, etc.).
+   To install without this warning, specify agents explicitly:
+   `npx skills add truongnat/clean-code-skills -a claude-code -a codex -a cursor -a antigravity -g -y`
+   *(note: Claude's agent key is `claude-code`, not `claude`)*.
 
 ### Developing the pack rather than consuming it
 

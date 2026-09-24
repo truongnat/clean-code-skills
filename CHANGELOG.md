@@ -28,13 +28,16 @@ recorded, and not an Antigravity path: it is **skills.sh's** hub, and the CLI sy
 agent's skills directory. The hand-built §1b recipe was re-implementing, badly, what the tool
 already did. `~/.gemini/config/skills` being a symlink to it was skills.sh's doing too.
 
-### Two CLI defects, documented because "Done!" was printed both times
+### Three CLI defects & quirks, documented because "Done!" was printed each time
 1. `-a codex,cursor` → `Invalid agents: codex,cursor`, while the same error lists `codex` and
    `cursor` as valid. Repeat the flag: `-a codex -a cursor`.
 2. After `--all -g` the lock file claimed 66 agents, but `~/.codex/skills` and `~/.cursor/skills`
    held **nothing** — the skills existed only in the hub. Both were linked by hand, and a subsequent
    `npx skills update` was run to confirm those manual links survive it. `INSTALL.md` §1b now ships
    the per-agent verification loop, because the summary line cannot be trusted.
+3. `npx skills add ... --all -g` reports `■ Failed to install 14` because 2 out of ~70 agents
+   (`Eve` and `PromptScript`) do not support global `-g` installation. 7 skills × 2 agents = 14 failures,
+   but all 7 skills are successfully installed and active for all major supported agents.
 
 ### Trade-off recorded rather than hidden
 A skills.sh install is a **copy** of the *published* repo, so editing a local clone changes nothing

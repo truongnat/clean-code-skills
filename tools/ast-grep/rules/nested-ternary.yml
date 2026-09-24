@@ -1,0 +1,10 @@
+id: nested-ternary
+message: "Nested ternary operator detected. Break into explicit if/else guard clauses or lookup table to avoid cognitive overload."
+severity: warning
+language: TypeScript
+rule:
+  any:
+    - pattern: "$A ? ($B ? $C : $D) : $E"
+    - pattern: "$A ? $B : ($C ? $D : $E)"
+    - pattern: "$A ? $B ? $C : $D : $E"
+    - pattern: "$A ? $B : $C ? $D : $E"

@@ -75,19 +75,24 @@ rule (untestable at midnight — inject a `Clock` port instead).
 ## 4. Choosing the shape (the short version of `references/13`)
 
 ```
-1 deployable, ≤ 8 engineers            → layered + hexagonal inside. Stop.
-2–5 domains, 5–50 engineers            → modular monolith: features + enforced boundaries.
-   (this is the answer ~80% of the time)
-consumers must react independently     → + events (outbox, idempotency, catalogue). Do not split the deployable yet.
-read/write shapes diverge hard          → CQRS (no ES unless audit/time-travel is the requirement).
-teams must deploy independently,
-each owning its data, at 40+ people     → microservices, one at a time, via strangler fig.
-spiky glue work, per-event cost         → serverless with the rules in a library, handlers ~10 lines.
+Fast iteration, CRUD/APIs, web apps    → Vertical Slice Architecture (Feature Folders):
+                                          colocate handler + schema + domain logic + tests.
+1 deployable, rich domain logic        → Layered / Hexagonal (ports & adapters).
+2–5 domains, 5–50 engineers            → Modular Monolith: feature slices + enforced boundaries.
+                                          (this is the optimal answer ~80% of the time)
+consumers must react independently     → + events (outbox, idempotency, catalogue).
+read/write shapes diverge hard         → CQRS (no ES unless audit/time-travel is the requirement).
+independent deployment at 40+ people   → Microservices, extracted via Strangler Fig.
+spiky glue work, per-event cost        → Serverless functions with domain logic in library.
 ```
 
-Say the cost out loud when you recommend one: "modular monolith costs us one shared DB and CI
-enforcement; it buys per-module isolation today and a clean seam if we ever split". A pattern
-proposed without its price tag is a fashion statement.
+### 4.1 Vertical Slice vs Layered (The Pragmatic Decision)
+- **Use Vertical Slice Architecture (VSA)** when building web APIs, microservices, or full-stack features:
+  - Put everything needed for a single user action into one folder: `src/features/create-order/{route.ts, schema.ts, order-logic.ts, order.test.ts}`.
+  - **No pass-through boilerplate**: A simple read endpoint queries the DB directly; no fake repository/adapter abstraction needed for a 5-line SQL query.
+- **Use Layered / Hexagonal (Onion)** when the business domain has heavy calculation rules, state machines, or multiple interchangeable storage adapters.
+
+Say the cost out loud when you recommend one: "Vertical slice costs slight duplication across slices; it buys zero-coupling and high developer velocity". A pattern proposed without its price tag is a fashion statement.
 
 ## 5. Review vocabulary — name the failure, not the person
 

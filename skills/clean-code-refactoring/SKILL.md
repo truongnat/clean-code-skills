@@ -19,25 +19,23 @@ metadata:
 > repo. If they are not, the same scanners may be on `PATH` as `cc-scan` / `arch-scan` (identical
 > flags) — see `INSTALL.md` §1b. If neither exists, ask for the report instead of guessing numbers.
 
-## 0. Three preconditions before you touch a key
+## 0. Four preconditions before you touch a key
 
-1. **Tests are green** — or you have just written characterization tests (§4).
-2. **Small scope** — one function, one problem class, one PR.
-3. **No behaviour change** — anything that alters input→output is a different PR, with its
-   own description.
+1. **Behaviour is locked** — tests are green, or you have characterization/snapshot tests (§4) proving exact input→output.
+2. **Small scope** — one function, one problem class, one atomic commit.
+3. **No behaviour change** — anything that alters logic is a separate feature/bugfix commit.
+4. **No micro-fragmentation** — do not split cohesive logic into single-use 3-line helpers.
 
-If any one of these is false, stop and fix that first. "I'll add the tests after" is how
-a cleanup turns into a silent regression: after the change you can no longer tell whether
-the new behaviour was always the old behaviour.
+If any of these is false, stop and lock it first.
 
 ## 1. Pick the refactoring by symptom
 
 | Symptom you can see | Refactoring | Steps |
 |---|---|---|
-| Function > 40 lines / you scroll | `Extract Method`, one business step per function | 1 per sub-function |
-| `if` nested ≥ 3 deep | `Guard Clauses` + `Decompose Conditional` | 1 |
-| 4+ parameters | `Introduce Parameter Object` | 1 |
-| `f(true)` flag argument | `Split Predicate` → two functions | 1 |
+| Cognitive complexity > 10 / Branch storm | `Guard Clauses` + `Decompose Conditional` + `Strategy` | 1–2 |
+| `if` nested ≥ 3 deep | `Guard Clauses` (invert `if` and return early) | 1 |
+| 4+ parameters | `Introduce Parameter Object` / Options object | 1 |
+| `f(true)` flag argument | `Split Predicate` → two explicit functions | 1 |
 | `switch (type)` repeated in several places | `Replace Conditional with Polymorphism`, or **table-driven** when the variants are data | 2–3 |
 | Two near-identical blocks | `Extract Function` / `Extract Superclass` **only after** proving they change for the same reason | 1–2 |
 | A temp variable lives for 60 lines | `Replace Temp with Query`, `Inline Temp` | 1 |
@@ -55,23 +53,19 @@ next*, you do not yet have a seam — extracting one now is guesswork (see
 ## 2. Six-step loop (repeat until the numbers move)
 
 ```bash
-# 0. photograph the current state so "improved" is a number, not a feeling
-python3 tools/cc-scan.py src/billing --json | tee /tmp/before.json | jq '{score, counts}'
+# 1. Snapshot baseline state & verify existing test suite is GREEN
+python3 tools/test-lock.py snapshot --test-cmd "npx vitest run src/billing" src/billing
 
-# 1. choose ONE refactoring from the table above, apply it with the IDE/LSP - never by hand
+# 2. Choose ONE refactoring from the table above, apply it via AST-grep or structured refactor
 
-# 2. run this module's tests
-npx vitest run src/billing          # or: pytest src/billing -q
-
-# 3. format, so the formatter does not "change" your diff in the next commit
+# 3. Format changed files
 npx prettier --write src/billing    # or: ruff format src/billing ; gofmt -l src/
 
-# 4. commit the refactor on its own
-git commit -am "refactor(billing): extract pricingPolicy from placeOrder"
+# 4. Verify safety harness: runs tests, checks score, blocks regressions
+python3 tools/test-lock.py verify
 
-# 5. measure again; if a folder moved, measure the structure too
-python3 tools/cc-scan.py src/billing --json | jq '{score, counts}'
-python3 tools/arch-scan.py src --fail-on none | sed -n '1,12p'
+# 5. Commit the atomic refactor on its own
+git commit -am "refactor(billing): extract pricingPolicy from placeOrder"
 ```
 
 **Score unchanged = you moved complexity around, you did not remove it.** Go back to step 1

@@ -62,18 +62,17 @@ exception process (§7) exists on purpose.
 - `i`/`j` only when the loop body is ≤ 3 lines; otherwise `itemIndex`, `page`.
 - Follow platform convention: `camelCase` (JS/TS/Java), `snake_case` (Python/Rust), `PascalCase` for types/classes, Go: exported = PascalCase, short receiver names.
 
-### 2.2 Functions
-- **Unreasonably short**: recommended ≤ 20 lines, warn > 40, must split > 70.
-- **One level of abstraction per function**: `processOrder()` calls `validate() → charge() → notify()`; no 15-line nested loop in between.
-- **Single responsibility for the function**: if a comment is needed to say "and this part…", split it.
-- **Parameters**: 0–2 good, 3 soft limit, ≥ 4 becomes an Options/Command object.
-  `updateProfile({ email, phone, address, notify })` beats four positional arguments.
+### 2.2 Functions: Cognitive Complexity & Cohesion
+- **Cognitive Complexity ≤ 10**: Flat, readable control flow. A 50-line linear data mapping or declarative template with 0 branches is fine; a 25-line function with 4 nested ternaries and callback hell is toxic.
+- **Cohesion over Micro-Fragmentation**: Do NOT break a readable flow into 5 single-use micro-helpers. If a logic block is only used once and is cohesive, keep it in place.
+- **One level of abstraction per function**: `processOrder()` orchestrates `validate() → charge() → notify()`; no 15-line raw SQL query or nested loop in between.
+- **Parameters**: 0–2 good, 3 soft limit, ≥ 4 becomes an Options/Command object: `updateProfile({ email, phone, address, notify })`.
 - **No hidden side effects**: `getFoo()` that writes to the DB is lying.
 - **Command–Query Separation**: queries change nothing; commands return nothing meaningful.
+- **Guard clauses at the top**: `if (invalid) return;` instead of wrapping the body in 3 layers of `if (valid) { … }`.
 - **A boolean flag is two functions in a trench coat**: `render(doc, isForPrint)` → `renderForScreen(doc)` + `renderForPrint(doc)`.
-- **Errors are exceptions, not `null`/`-1`/error codes** (§2.5).
+- **Errors are exceptions/Results, not magic return codes (`null`/`-1`/`false`)** (§2.5).
 - `try` wraps only what can fail; return `Optional`/`Result` when "not found" is a normal outcome.
-- Guard clauses at the top: `if (invalid) return;` instead of wrapping the body in `if (valid) { … }`.
 
 ### 2.3 Magic numbers & strings
 - Every literal **in logic** gets a name: `status == 3` → `status == OrderStatus.AWAITING_PAYMENT`.
@@ -104,6 +103,12 @@ exception process (§7) exists on purpose.
 - Related code near each other: caller above callee, declaration near use.
 - Files ≤ 400 lines; beyond that there are usually two modules in one file.
 - One concept in one place: constants at the top of the module or in `constants.ts`, not sprinkled mid-function.
+
+### 2.7 AI Agent Negative Constraints (Hard Boundaries)
+- ❌ **No speculative abstractions**: Never generate an interface/adapter if there is only 1 concrete class.
+- ❌ **No shotgun micro-helpers**: Do not extract 3-line functions called in only one place.
+- ❌ **No anemic mapper chains**: Do not introduce 4 DTO mapping layers for simple CRUD.
+- ❌ **No refactor without safety lock**: Always ensure test coverage or lock behavior with a characterization test before changing code.
 
 ## 3. Design: principles, layers, patterns
 

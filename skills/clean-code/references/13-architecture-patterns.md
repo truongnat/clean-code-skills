@@ -46,7 +46,7 @@ implement them; nothing points inwards except through a port.
 Same as hexagonal with concentric rings and the dependency rule spelled out. Pick the vocabulary
 your team already uses; the enforcement (`arch-scan`, import-linter) is identical.
 
-### Modular monolith ← **the default answer for most teams**
+### Modular monolith ← **the default answer for multi-domain systems**
 
 One deployable, hard internal boundaries, machine-enforced:
 
@@ -62,6 +62,23 @@ src/checkout/  src/pricing/  src/shipping/     each with domain/application/adap
 - **Failure mode**: boundaries drawn on paper. Without the CI check they dissolve in one quarter.
 - **Numbers to quote to management**: you keep 1 pipeline, 1 on-call rotation, ~0 network
   failures; you can split a module out later with the strangler pattern (§3).
+
+### Vertical slice architecture (feature colocation) ← **the default for web APIs & modern stacks**
+
+Organize code by **feature capability** rather than technical layer:
+
+```
+src/features/place-order/
+├── route.ts          (HTTP request/response validation)
+├── command.ts        (payload definition & business rules)
+├── repository.ts     (direct database query/mutation - no pass-through interfaces)
+└── place-order.test.ts
+```
+
+- **Use when**: Fast-moving product teams, web applications (Next.js, FastAPI, Go Gin/Fiber), CRUD services with varying rules per endpoint.
+- **Cost**: Slight code duplication across slices (e.g. repeated SQL schemas or DTOs) instead of premature sharing.
+- **Failure mode**: Cross-slice incest — `features/place-order` directly importing private helpers from `features/cancel-order`. Treat each slice as a self-contained unit; shared primitives go to `common/` or `core/`.
+- **Why it beats 4-layer architecture for 90% of web apps**: Eliminates the "tunnel of 5 empty files" (Controller -> Service -> ServiceInterface -> RepositoryInterface -> RepositoryImplementation) for simple actions.
 
 ### Event-driven / pub-sub
 

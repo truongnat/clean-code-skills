@@ -1,0 +1,10 @@
+id: boolean-flag-call
+message: "Positional boolean literal passed to function call. Use named options object or explicit function variants."
+severity: info
+language: TypeScript
+rule:
+  any:
+    - pattern: "$FN($A, true)"
+    - pattern: "$FN($A, false)"
+    - pattern: "$FN($A, $B, true)"
+    - pattern: "$FN($A, $B, false)"

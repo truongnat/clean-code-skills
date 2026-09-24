@@ -19,33 +19,36 @@ under that name). Keep it short — it is loaded into every session.
 
 ## The rules, in the order they cost money
 
-1. **Naming** — names state intent. No `Data/Info/Manager/Util`. Booleans positive (`isEligible`,
+1. **Naming & Intent** — names state business intent. No `Data/Info/Manager/Util`. Booleans positive (`isEligible`,
    never `isNotEligible`). Carry the unit: `timeoutMs`, `totalMinorVnd`.
-2. **Functions** — ≤ 40 lines, one job, ≤ 3 parameters, no boolean flag arguments, no hidden side
-   effects, command separated from query.
-3. **Magic values** — every literal inside logic gets a name; state strings become enums.
-4. **Comments** — explain *why*, never *what*. No commented-out code. Every TODO carries a ticket
+2. **Cognitive Complexity over Line Count** — keep cognitive complexity low (≤ 10 per function). Guard clauses
+   at top, flat control flow. Linear transformations/JSX can exceed 40 lines; branch storms and deep nesting (>3 levels) cannot.
+3. **Cohesion over Micro-Fragmentation** — do NOT extract single-use 3-line helper functions that break reading flow.
+   Keep cohesive business logic together.
+4. **Magic values** — every literal inside logic gets a name; state strings become enums.
+5. **Comments** — explain *why*, never *what*. No commented-out code. Every TODO carries a ticket
    and an owner.
-5. **Formatting** — the formatter owns it. Raise it only with a number (line > 120, file > 400).
-6. **Objects & data** — encapsulate, respect the Law of Demeter, no anaemic domain, no primitive
+6. **Formatting** — the formatter owns it. Raise it only with a number (line > 120, file > 400).
+7. **Objects & data** — encapsulate, respect the Law of Demeter, no anaemic domain, no primitive
    obsession.
-7. **Errors** — a specific exception type with data in the message; preserve the cause on every
+8. **Errors** — a specific exception type with data in the message; preserve the cause on every
    wrap; never swallow a catch; retries have a ceiling; map to HTTP/exit codes in exactly one place.
-8. **Design** — SRP by reason-to-change, OCP only when a second variant actually exists, real DRY
-   (not coincidental duplication), YAGNI, KISS.
-9. **Hygiene & tests** — no leftover debug logs or dead code; tests assert behaviour and cover every
-   new error branch; no `sleep`, no `random`, no mocking what we own.
-10. **Architecture** — dependencies point inward (domain → application → infrastructure/interface),
-    no cycles, no framework types in the domain, no feature reaching into another's internals.
+9. **Pragmatic Design** — SRP by reason-to-change, OCP only when a second variant actually exists, real DRY
+   (not coincidental duplication), YAGNI, KISS. Colocate code by feature (Vertical Slice) before layer-splitting.
+10. **Hygiene & tests** — no leftover debug logs or dead code; tests assert behaviour and cover every
+    new error branch; lock behavior before refactoring; no `sleep`, no `random`, no mocking what we own.
+11. **Architecture** — dependencies point inward (domain → application → infrastructure/interface),
+    no cycles, no framework types in core domain, no feature reaching into another's internals.
 
-## Hard constraints on your output
+## Hard constraints on your output (Negative Constraints)
 
 - **Never invent a symbol.** Cite only identifiers, files and line numbers that exist in what you
   were given. If a fix needs a file you cannot see, say which one and stop at the hypothesis.
-- **No behaviour change inside a refactor.** If behaviour must change, that is a separate commit,
+- **No behaviour change inside a refactor.** Lock behaviour with tests first. If behaviour must change, that is a separate commit,
   announced as such.
-- **No new abstraction with one implementation.** If you add one anyway, write the cost and the
-  trigger that justified it (`skills/clean-code/templates/adr-template.md`).
+- **No speculative abstractions.** Never create an Interface, Abstract Class, Adapter, or Port with only one implementation.
+- **No shotgun surgery helpers.** Do not split a readable linear function into fragmented micro-functions used only once.
+- **No anemic mapper chains.** Do not add 4 layers of DTO mappings for straightforward operations unless crossing architectural boundaries.
 - **Exceptions must be visible**: `cc-scan:allow <RULE> — <reason>` / `arch-scan:allow <RULE> —
   <ticket>` on the line, never a silently disabled rule.
 - **Prove it before you claim it.** Run the command and paste the output; do not assert a score, a

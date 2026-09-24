@@ -1,0 +1,6 @@
+id: swallowed-catch
+message: "Catch block swallows error without rethrowing, returning Result/Error, or handling explicitly."
+severity: error
+language: TypeScript
+rule:
+  pattern: "catch ($ERR) { }"
